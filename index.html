@@ -195,6 +195,430 @@ const Avatar = ({name,status,size=34}) => (
   </div>
 );
 
+// ─── PEOPLE GANTT VIEW ────────────────────────────────────────────────────────
+
+function PeopleGanttView({ projects, people, assignments }) {
+
+  const [ganttYear,    setGanttYear]    = useState(2026);
+  const [tooltip,      setTooltip]      = useState(null);
+  const [filterSw,     setFilterSw]     = useState("Todos");
+  const [filterRol,    setFilterRol]    = useState("Todos");
+  const [highlightProj,setHighlightProj]= useState(null); // projectId to highlight
+  const scrollRef = useRef(null);
+
+  const MONTHS  = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+  const ROW_H   = 42;
+  const LABEL_W = 210;
+  const MONTH_W = 90;
+  const TOTAL_W = MONTHS.length * MONTH_W;
+
+  const yearStart = new Date(`${ganttYear}-01-01T00:00:00`);
+  const yearEnd   = new Date(`${ganttYear}-12-31T23:59:59`);
+  const totalMs   = yearEnd - yearStart;
+
+  const pctX = (date) => {
+    const d = typeof date === "string" ? parseD(date) : date;
+    return Math.max(0, Math.min(1, (d - yearStart) / totalMs));
+  };
+
+  const todayPct    = pctX(TODAY);
+  const todayInYear = TODAY >= yearStart && TODAY <= yearEnd;
+
+  // For each person, collect their project segments (from project dates + assignment)
+  const activePeople = useMemo(() => {
+    return people.filter(p => {
+      if(filterSw !== "Todos" && p.software !== filterSw) return false;
+      return true;
+    }).sort((a,b) => a.name.localeCompare(b.name));
+  }, [people, filterSw]);
+
+  // Get segments for a person: one segment per assignment (using project dates)
+  const segmentsFor = (personId) => {
+    return assignments
+      .filter(a => a.personId === personId)
+      .filter(a => filterRol === "Todos" || a.rol === filterRol || (!a.rol && filterRol === "Todos"))
+      .map(a => {
+        const proj = projects.find(p => p.id === a.projectId);
+        if (!proj || !proj.inicio || !proj.fin) return null;
+        const s = parseD(proj.inicio);
+        const e = parseD(proj.fin);
+        if (s > yearEnd || e < yearStart) return null;
+        return { proj, a, startPct: pctX(proj.inicio), endPct: pctX(proj.fin) };
+      })
+      .filter(Boolean);
+  };
+
+  // Load per person per month = number of concurrent projects
+  const loadMatrix = useMemo(() => {
+    return activePeople.map(person => ({
+      person,
+      segs: segmentsFor(person.id),
+    })).filter(r => r.segs.length > 0);
+  }, [activePeople, assignments, projects, ganttYear, filterRol]);
+
+  // People overload per month (for summary bar chart)
+  const loadPerMonth = MONTHS.map((_,mi) => {
+    const mStart = new Date(ganttYear, mi, 1);
+    const mEnd   = new Date(ganttYear, mi+1, 0);
+    return loadMatrix.filter(({segs}) =>
+      segs.some(s => parseD(s.proj.inicio) <= mEnd && parseD(s.proj.fin) >= mStart)
+    ).length;
+  });
+  const maxLoad = Math.max(...loadPerMonth, 1);
+
+  // Unique projects in view (for the legend / highlight)
+  const visibleProjects = useMemo(() => {
+    const ids = new Set(loadMatrix.flatMap(r => r.segs.map(s => s.proj.id)));
+    return projects.filter(p => ids.has(p.id));
+  }, [loadMatrix, projects]);
+
+  const projColor = (projId) => {
+    const idx = visibleProjects.findIndex(p => p.id === projId);
+    return GANTT_COLORS[idx % GANTT_COLORS.length];
+  };
+
+  const swColor = sw => sw === "Civil 3D" ? "#f59e0b" : sw === "Ambos" ? "#22c55e" : "#3b82f6";
+
+  return (
+    <div style={{paddingBottom:40}}>
+
+      {/* Controls */}
+      <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:20,flexWrap:"wrap",gap:12}}>
+        <div>
+          <div style={{fontSize:18,fontWeight:800,color:"#f1f5f9"}}>Calendario de Equipo</div>
+          <div style={{fontSize:12,color:"#64748b",marginTop:2}}>
+            Ocupación por persona · cuándo está en cada proyecto y cuándo termina
+          </div>
+        </div>
+        <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
+          {/* Software filter */}
+          <div style={{display:"flex",gap:3,background:"#0f172a",borderRadius:8,padding:3}}>
+            {["Todos","Revit","Civil 3D","Ambos"].map(sw=>(
+              <button key={sw} onClick={()=>setFilterSw(sw)}
+                style={{border:"none",borderRadius:6,padding:"5px 11px",fontSize:11,fontWeight:600,cursor:"pointer",
+                  background:filterSw===sw?(sw==="Civil 3D"?"#f59e0b":sw==="Ambos"?"#22c55e":"#3b82f6"):"transparent",
+                  color:filterSw===sw?"#fff":"#64748b"}}>
+                {sw}
+              </button>
+            ))}
+          </div>
+          {/* Rol filter */}
+          <div style={{display:"flex",gap:3,background:"#0f172a",borderRadius:8,padding:3}}>
+            {["Todos","Modelado","Coordinación"].map(r=>(
+              <button key={r} onClick={()=>setFilterRol(r)}
+                style={{border:"none",borderRadius:6,padding:"5px 11px",fontSize:11,fontWeight:600,cursor:"pointer",
+                  background:filterRol===r?(r==="Coordinación"?"#a78bfa":"#3b82f6"):"transparent",
+                  color:filterRol===r?"#fff":"#64748b"}}>
+                {r==="Modelado"?"🟦 MOD":r==="Coordinación"?"🟣 COO":"Todos"}
+              </button>
+            ))}
+          </div>
+          {/* Year nav */}
+          <div style={{display:"flex",gap:4,alignItems:"center"}}>
+            <button onClick={()=>setGanttYear(y=>y-1)}
+              style={{border:"none",background:"#1e293b",color:"#e2e8f0",borderRadius:8,
+                padding:"6px 12px",cursor:"pointer",fontSize:13,fontWeight:600}}>‹</button>
+            <span style={{fontSize:14,fontWeight:700,color:"#f1f5f9",minWidth:40,textAlign:"center"}}>{ganttYear}</span>
+            <button onClick={()=>setGanttYear(y=>y+1)}
+              style={{border:"none",background:"#1e293b",color:"#e2e8f0",borderRadius:8,
+                padding:"6px 12px",cursor:"pointer",fontSize:13,fontWeight:600}}>›</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Project legend for highlight */}
+      {visibleProjects.length > 0 && (
+        <div style={{background:"#1e293b",border:"1px solid #1e3a5f",borderRadius:12,
+          padding:"12px 16px",marginBottom:14,display:"flex",flexWrap:"wrap",gap:6,alignItems:"center"}}>
+          <span style={{fontSize:10,color:"#64748b",fontWeight:700,textTransform:"uppercase",
+            letterSpacing:"0.5px",marginRight:4}}>Destacar proyecto:</span>
+          <button onClick={()=>setHighlightProj(null)}
+            style={{border:"none",borderRadius:20,padding:"3px 10px",fontSize:10,fontWeight:700,cursor:"pointer",
+              background:highlightProj===null?"#3b82f6":"#0f172a",color:highlightProj===null?"#fff":"#64748b"}}>
+            Todos
+          </button>
+          {visibleProjects.map(p=>{
+            const c = projColor(p.id);
+            const sel = highlightProj === p.id;
+            return (
+              <button key={p.id} onClick={()=>setHighlightProj(sel?null:p.id)}
+                style={{border:`1.5px solid ${c}`,borderRadius:20,padding:"3px 10px",fontSize:10,fontWeight:700,
+                  cursor:"pointer",background:sel?`${c}30`:"transparent",color:sel?c:"#64748b",
+                  transition:"all .15s"}}>
+                {p.name}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Load summary chart — people active per month */}
+      <div style={{background:"#1e293b",border:"1px solid #1e3a5f",borderRadius:12,padding:"14px 18px",marginBottom:14}}>
+        <div style={{fontSize:11,fontWeight:700,color:"#64748b",textTransform:"uppercase",letterSpacing:"0.5px",marginBottom:10}}>
+          Personas activas por mes · máximo {maxLoad}
+        </div>
+        <div style={{display:"flex",gap:3,alignItems:"flex-end",height:52}}>
+          {loadPerMonth.map((n,mi)=>{
+            const h = maxLoad > 0 ? Math.round((n/maxLoad)*44)+8 : 8;
+            const color = n>=20?"#ef4444":n>=12?"#f59e0b":"#3b82f6";
+            const isNow = TODAY.getFullYear()===ganttYear && TODAY.getMonth()===mi;
+            return (
+              <div key={mi} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+                <div style={{fontSize:9,fontWeight:700,color}}>{n>0?n:""}</div>
+                <div style={{width:"100%",height:h,background:color,borderRadius:"3px 3px 0 0",
+                  opacity:isNow?1:0.6,border:isNow?`2px solid ${color}`:"2px solid transparent"}}/>
+                <div style={{fontSize:9,color:isNow?"#f1f5f9":"#475569",fontWeight:isNow?700:400}}>{MONTHS[mi]}</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Main Gantt grid */}
+      <div style={{background:"#1e293b",border:"1px solid #1e3a5f",borderRadius:12,overflow:"hidden"}}>
+
+        {/* Header */}
+        <div style={{display:"flex",borderBottom:"1px solid #0f172a",position:"sticky",top:0,zIndex:10,background:"#162032"}}>
+          <div style={{width:LABEL_W,minWidth:LABEL_W,padding:"10px 16px",
+            fontSize:11,fontWeight:700,color:"#64748b",textTransform:"uppercase",letterSpacing:"0.5px",
+            borderRight:"1px solid #0f172a",flexShrink:0}}>
+            Persona
+          </div>
+          <div style={{flex:1,overflowX:"auto"}} ref={scrollRef}>
+            <div style={{display:"flex",minWidth:TOTAL_W}}>
+              {MONTHS.map(m=>(
+                <div key={m} style={{width:MONTH_W,minWidth:MONTH_W,textAlign:"center",
+                  padding:"10px 4px",fontSize:11,fontWeight:700,color:"#64748b",
+                  textTransform:"uppercase",letterSpacing:"0.5px",borderRight:"1px solid #0f172a"}}>
+                  {m} {ganttYear}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {loadMatrix.length === 0 && (
+          <div style={{padding:36,textAlign:"center",color:"#475569",fontSize:13}}>
+            Sin asignaciones visibles en {ganttYear} con los filtros seleccionados
+          </div>
+        )}
+
+        {loadMatrix.map(({person, segs}, rowIdx) => {
+          const sc     = statusColor(person.status);
+          const swC    = swColor(person.software);
+          const isEven = rowIdx % 2 === 0;
+
+          // Stack segments into lanes to avoid visual overlaps
+          const lanes = [];
+          segs.forEach(seg => {
+            let placed = false;
+            for(const lane of lanes) {
+              const last = lane[lane.length-1];
+              if(seg.startPct >= last.endPct + 0.005) {
+                lane.push(seg); placed = true; break;
+              }
+            }
+            if(!placed) lanes.push([seg]);
+          });
+          const nLanes = Math.max(lanes.length, 1);
+          const rowH   = Math.max(ROW_H, nLanes * 26 + 12);
+
+          return (
+            <div key={person.id}
+              style={{display:"flex",borderBottom:"1px solid #0f172a",
+                background:isEven?"#1e293b":"#162032",minHeight:rowH}}>
+
+              {/* Person label */}
+              <div style={{width:LABEL_W,minWidth:LABEL_W,padding:"8px 12px",
+                display:"flex",alignItems:"flex-start",gap:8,borderRight:"1px solid #0f172a",flexShrink:0}}>
+                <div style={{marginTop:2}}>
+                  <Avatar name={person.name} status={person.status} size={28}/>
+                </div>
+                <div style={{minWidth:0,flex:1}}>
+                  <div style={{fontSize:11,fontWeight:700,color:"#e2e8f0",
+                    whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+                    {person.name}
+                  </div>
+                  <div style={{fontSize:9,color:"#64748b",marginTop:1}}>{person.perfil}</div>
+                  <div style={{display:"flex",gap:4,marginTop:3,flexWrap:"wrap"}}>
+                    <span style={{background:`${swC}20`,color:swC,fontSize:8,fontWeight:700,
+                      padding:"1px 5px",borderRadius:99}}>
+                      {person.software==="Civil 3D"?"C3D":person.software==="Ambos"?"AMP":"RVT"}
+                    </span>
+                    <span style={{fontSize:8,color:"#475569"}}>{segs.length} proy.</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Gantt track */}
+              <div style={{flex:1,position:"relative",minWidth:TOTAL_W,height:rowH}}>
+
+                {/* Month grid lines */}
+                {MONTHS.map((_,mi)=>(
+                  <div key={mi} style={{position:"absolute",left:`${(mi/12)*100}%`,top:0,bottom:0,
+                    width:1,background:"#0f172a",opacity:0.5}}/>
+                ))}
+
+                {/* Today line */}
+                {todayInYear && (
+                  <div style={{position:"absolute",left:`${todayPct*100}%`,top:0,bottom:0,
+                    width:2,background:"#f97316",zIndex:5,opacity:0.9}}/>
+                )}
+
+                {/* Render lanes */}
+                {lanes.map((lane, laneIdx) =>
+                  lane.map((seg) => {
+                    const { proj, a } = seg;
+                    const color  = projColor(proj.id);
+                    const barW   = Math.max(seg.endPct - seg.startPct, 0.008);
+                    const isHL   = highlightProj === null || highlightProj === proj.id;
+                    const rolColor = a.rol === "Coordinación" ? "#a78bfa" : a.rol === "Modelado" ? "#3b82f6" : color;
+                    const barTop = 6 + laneIdx * 26;
+                    const entPct = proj.entrega ? pctX(proj.entrega) : null;
+
+                    return (
+                      <React.Fragment key={`${proj.id}|${a.rol||"x"}|${laneIdx}`}>
+                        {/* Project bar */}
+                        <div
+                          className="gantt-bar"
+                          onMouseEnter={e=>setTooltip({person, proj, a, x:e.clientX, y:e.clientY})}
+                          onMouseLeave={()=>setTooltip(null)}
+                          style={{
+                            position:"absolute",
+                            left:`${seg.startPct*100}%`,
+                            width:`${barW*100}%`,
+                            top:barTop,
+                            height:20,
+                            borderRadius:4,
+                            background: isHL ? `${color}35` : "#1e293b",
+                            border: isHL ? `1.5px solid ${color}80` : "1.5px solid #334155",
+                            overflow:"hidden",
+                            opacity: isHL ? 1 : 0.25,
+                            zIndex:2,
+                            cursor:"pointer",
+                            transition:"opacity .2s",
+                          }}>
+                          {/* Rol color strip on left edge */}
+                          {isHL && a.rol && (
+                            <div style={{position:"absolute",left:0,top:0,bottom:0,width:3,
+                              background:rolColor,borderRadius:"3px 0 0 3px"}}/>
+                          )}
+                          {/* Label inside bar if wide enough */}
+                          {isHL && barW > 0.1 && (
+                            <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",
+                              paddingLeft: a.rol ? 7 : 5,fontSize:8,fontWeight:700,color:"#f1f5f9",
+                              whiteSpace:"nowrap",overflow:"hidden",zIndex:2}}>
+                              {proj.name}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Entrega diamond */}
+                        {entPct !== null && entPct >= 0 && entPct <= 1 && isHL && (
+                          <div
+                            onMouseEnter={e=>setTooltip({person, proj, a, x:e.clientX, y:e.clientY, isEntrega:true})}
+                            onMouseLeave={()=>setTooltip(null)}
+                            style={{
+                              position:"absolute",
+                              left:`${entPct*100}%`,
+                              top: barTop + 3,
+                              transform:"translate(-50%,0) rotate(45deg)",
+                              width:12,height:12,
+                              background:color,
+                              border:"2px solid #0f172a",
+                              zIndex:6,cursor:"pointer",
+                            }}/>
+                        )}
+
+                        {/* End marker: vertical tick at fin date */}
+                        {isHL && (
+                          <div style={{
+                            position:"absolute",
+                            left:`${seg.endPct*100}%`,
+                            top: barTop,
+                            height:20,
+                            width:2,
+                            background:`${color}90`,
+                            zIndex:3,
+                          }}/>
+                        )}
+                      </React.Fragment>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Legend */}
+        <div style={{padding:"12px 16px",display:"flex",gap:16,alignItems:"center",
+          borderTop:"1px solid #0f172a",background:"#0f172a",flexWrap:"wrap"}}>
+          <div style={{display:"flex",alignItems:"center",gap:6,fontSize:10,color:"#64748b"}}>
+            <div style={{width:3,height:14,background:"#3b82f6",borderRadius:2}}/>
+            <span>Franja izq. = rol (🟦 MOD / 🟣 COO)</span>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:6,fontSize:10,color:"#64748b"}}>
+            <div style={{width:10,height:10,background:"#a78bfa",transform:"rotate(45deg)",flexShrink:0}}/>
+            <span>◆ Fecha entrega del proyecto</span>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:6,fontSize:10,color:"#64748b"}}>
+            <div style={{width:2,height:14,background:"#64748b",borderRadius:1}}/>
+            <span>| Fin del proyecto</span>
+          </div>
+          {todayInYear && (
+            <div style={{display:"flex",alignItems:"center",gap:6,fontSize:10,color:"#64748b"}}>
+              <div style={{width:2,height:14,background:"#f97316"}}/>
+              <span>Hoy ({fmtShort(TODAY)})</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Tooltip */}
+      {tooltip && (
+        <div style={{
+          position:"fixed",left:tooltip.x+14,top:tooltip.y-10,
+          background:"#1e293b",border:"1px solid #334155",
+          borderRadius:10,padding:"12px 16px",zIndex:200,
+          boxShadow:"0 8px 32px rgba(0,0,0,.5)",minWidth:240,pointerEvents:"none"
+        }}>
+          <div style={{fontSize:13,fontWeight:700,color:"#f1f5f9",marginBottom:2}}>
+            {tooltip.proj.name}
+          </div>
+          <div style={{fontSize:11,color:"#64748b",marginBottom:8}}>
+            {tooltip.proj.client} · {tooltip.proj.bimId}
+          </div>
+          {tooltip.isEntrega ? (
+            <div style={{fontSize:11,color:"#f59e0b",fontWeight:600}}>🔔 Entrega: {fmtD(parseD(tooltip.proj.entrega))}</div>
+          ) : (
+            <div style={{display:"grid",gridTemplateColumns:"auto 1fr",gap:"4px 12px",fontSize:11}}>
+              <span style={{color:"#64748b"}}>Persona</span>
+              <span style={{color:"#e2e8f0",fontWeight:600}}>{tooltip.person.name}</span>
+              {tooltip.a.rol&&<><span style={{color:"#64748b"}}>Rol</span>
+              <span style={{color:tooltip.a.rol==="Coordinación"?"#a78bfa":"#3b82f6",fontWeight:700}}>
+                {tooltip.a.rol==="Coordinación"?"🟣 Coordinación":"🟦 Modelado"}
+              </span></>}
+              {tooltip.a.software&&<><span style={{color:"#64748b"}}>Software</span>
+              <span style={{color:"#e2e8f0"}}>{tooltip.a.software}</span></>}
+              <span style={{color:"#64748b"}}>Horas asig.</span>
+              <span style={{color:"#e2e8f0"}}>{tooltip.a.horas}h</span>
+              {tooltip.a.horasReales!=null&&<><span style={{color:"#64748b"}}>Horas reales</span>
+              <span style={{color:"#3b82f6",fontWeight:700}}>{tooltip.a.horasReales}h</span></>}
+              <span style={{color:"#64748b"}}>Inicio proy.</span>
+              <span style={{color:"#e2e8f0"}}>{fmtShort(parseD(tooltip.proj.inicio))}</span>
+              <span style={{color:"#64748b"}}>Fin proy.</span>
+              <span style={{color:"#e2e8f0"}}>{fmtShort(parseD(tooltip.proj.fin))}</span>
+              {tooltip.proj.entrega&&<><span style={{color:"#64748b"}}>Entrega</span>
+              <span style={{color:"#f59e0b",fontWeight:700}}>{fmtShort(parseD(tooltip.proj.entrega))}</span></>}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── GANTT CALENDAR VIEW ──────────────────────────────────────────────────────
 
 function GanttView({ projects, assignments }) {
@@ -1750,7 +2174,29 @@ function App() {
         </div>
 
         {/* CALENDAR VIEW */}
-        {view==="calendar" && <GanttView projects={projects} assignments={assignments}/>}
+        {view==="calendar" && (()=>{
+          const [calTab, setCalTab] = React.useState("proyectos");
+          return (
+            <div>
+              {/* Sub-tab selector */}
+              <div style={{display:"flex",gap:4,background:"#0f172a",borderRadius:10,padding:4,
+                marginBottom:20,alignSelf:"flex-start",width:"fit-content"}}>
+                {[{id:"proyectos",label:"📅 Proyectos"},{id:"equipo",label:"👤 Equipo"}].map(t=>(
+                  <button key={t.id} onClick={()=>setCalTab(t.id)}
+                    style={{border:"none",borderRadius:7,padding:"8px 20px",fontSize:12,fontWeight:700,
+                      cursor:"pointer",background:calTab===t.id?"#3b82f6":"transparent",
+                      color:calTab===t.id?"#fff":"#64748b",transition:"all .15s"}}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+              {calTab==="proyectos"
+                ? <GanttView projects={projects} assignments={assignments}/>
+                : <PeopleGanttView projects={projects} people={people} assignments={assignments}/>
+              }
+            </div>
+          );
+        })()}
 
         {/* REPORT VIEW */}
         {view==="report" && <ReportView projects={projects} people={people} assignments={assignments}/>}
