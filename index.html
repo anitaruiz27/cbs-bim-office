@@ -683,7 +683,7 @@ function ReportView({ projects, people, assignments }) {
           <table style={{width:"100%",borderCollapse:"collapse"}}>
             <thead>
               <tr>
-                {["RAG","Proyecto","Cliente","Tipo","Avance Horas","Avance Alcance","Desviación","Equipo","Entrega"].map(h=>(
+                {["RAG","Proyecto","Cliente","Tipo","Avance Horas","🟦 MOD","🟣 COO","Avance Alcance","Desviación","Equipo","Entrega"].map(h=>(
                   <th key={h} style={S2.thr}>{h}</th>
                 ))}
               </tr>
@@ -694,7 +694,16 @@ function ReportView({ projects, people, assignments }) {
                 const sPct  = scopeAvance(proj.id);
                 const r     = rag(proj);
                 const diff  = hPct - sPct;
-                const nPers = assignments.filter(a=>a.projectId===proj.id).length;
+                // Build equipo breakdown by rol from assignments
+                const projAsgns = assignments.filter(a=>a.projectId===proj.id);
+                const nPers = new Set(projAsgns.map(a=>a.personId)).size;
+                const hModAsig = projAsgns.filter(a=>a.rol==="Modelado").reduce((s,a)=>s+a.horas,0);
+                const hCooAsig = projAsgns.filter(a=>a.rol==="Coordinación").reduce((s,a)=>s+a.horas,0);
+                // Software breakdown
+                const swRevit = new Set(projAsgns.filter(a=>a.software==="Revit"||(!a.software&&people.find(p=>p.id===a.personId)?.software==="Revit")).map(a=>a.personId)).size;
+                const swC3D   = new Set(projAsgns.filter(a=>a.software==="Civil 3D"||(!a.software&&people.find(p=>p.id===a.personId)?.software==="Civil 3D")).map(a=>a.personId)).size;
+                const modPct  = proj.horasOfertaMod>0 ? Math.round((proj.horasConsMod||0)/proj.horasOfertaMod*100) : null;
+                const cooPct  = proj.horasOfertaCoo>0 ? Math.round((proj.horasConsCoo||0)/proj.horasOfertaCoo*100) : null;
                 return (
                   <tr key={proj.id} style={{background:i%2===0?"#1e293b":"#162032"}}>
                     <td style={{...S2.tdc,textAlign:"center"}}>
@@ -709,20 +718,50 @@ function ReportView({ projects, people, assignments }) {
                       <span style={{background:`${tipoColor(proj.tipo)}20`,color:tipoColor(proj.tipo),
                         fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20}}>{proj.tipo}</span>
                     </td>
-                    {/* Avance horas */}
+                    {/* Avance horas total */}
                     <td style={S2.tdc}>
                       <div style={{display:"flex",alignItems:"center",gap:6}}>
-                        <div style={{background:"#0f172a",borderRadius:99,height:5,width:60,overflow:"hidden"}}>
+                        <div style={{background:"#0f172a",borderRadius:99,height:5,width:50,overflow:"hidden"}}>
                           <div style={{width:`${Math.min(hPct,100)}%`,height:"100%",background:progressColor(hPct),borderRadius:99}}/>
                         </div>
                         <span style={{fontSize:11,fontWeight:700,color:progressColor(hPct)}}>{hPct}%</span>
                       </div>
                       <div style={{fontSize:9,color:"#475569",marginTop:2}}>{proj.horasConsumidas}/{proj.horasOferta}h</div>
                     </td>
+                    {/* MOD */}
+                    <td style={S2.tdc}>
+                      {modPct!==null ? (
+                        <>
+                          <div style={{display:"flex",alignItems:"center",gap:5}}>
+                            <div style={{background:"#0f172a",borderRadius:99,height:4,width:40,overflow:"hidden"}}>
+                              <div style={{width:`${Math.min(modPct,100)}%`,height:"100%",background:progressColor(modPct),borderRadius:99}}/>
+                            </div>
+                            <span style={{fontSize:10,fontWeight:700,color:progressColor(modPct)}}>{modPct}%</span>
+                          </div>
+                          <div style={{fontSize:9,color:"#475569"}}>{proj.horasConsMod||0}/{proj.horasOfertaMod}h</div>
+                          {hModAsig>0&&<div style={{fontSize:9,color:"#3b82f6",marginTop:1}}>👤 {hModAsig}h asig.</div>}
+                        </>
+                      ) : <span style={{color:"#334155",fontSize:11}}>—</span>}
+                    </td>
+                    {/* COO */}
+                    <td style={S2.tdc}>
+                      {cooPct!==null ? (
+                        <>
+                          <div style={{display:"flex",alignItems:"center",gap:5}}>
+                            <div style={{background:"#0f172a",borderRadius:99,height:4,width:40,overflow:"hidden"}}>
+                              <div style={{width:`${Math.min(cooPct,100)}%`,height:"100%",background:progressColor(cooPct),borderRadius:99}}/>
+                            </div>
+                            <span style={{fontSize:10,fontWeight:700,color:progressColor(cooPct)}}>{cooPct}%</span>
+                          </div>
+                          <div style={{fontSize:9,color:"#475569"}}>{proj.horasConsCoo||0}/{proj.horasOfertaCoo}h</div>
+                          {hCooAsig>0&&<div style={{fontSize:9,color:"#a78bfa",marginTop:1}}>👤 {hCooAsig}h asig.</div>}
+                        </>
+                      ) : <span style={{color:"#334155",fontSize:11}}>—</span>}
+                    </td>
                     {/* Avance alcance */}
                     <td style={S2.tdc}>
                       <div style={{display:"flex",alignItems:"center",gap:6}}>
-                        <div style={{background:"#0f172a",borderRadius:99,height:5,width:60,overflow:"hidden"}}>
+                        <div style={{background:"#0f172a",borderRadius:99,height:5,width:50,overflow:"hidden"}}>
                           <div style={{width:`${Math.min(sPct,100)}%`,height:"100%",background:"#a78bfa",borderRadius:99}}/>
                         </div>
                         <span style={{fontSize:11,fontWeight:700,color:"#a78bfa"}}>{sPct}%</span>
@@ -739,7 +778,14 @@ function ReportView({ projects, people, assignments }) {
                         {diff>0?"+":""}{diff}pts
                       </span>
                     </td>
-                    <td style={{...S2.tdc,textAlign:"center",color:"#94a3b8"}}>{nPers}👤</td>
+                    {/* Equipo con software */}
+                    <td style={{...S2.tdc,textAlign:"center"}}>
+                      <div style={{fontSize:12,fontWeight:700,color:"#94a3b8"}}>{nPers}👤</div>
+                      <div style={{display:"flex",gap:3,justifyContent:"center",marginTop:3,flexWrap:"wrap"}}>
+                        {swRevit>0&&<span style={{background:"#3b82f620",color:"#3b82f6",fontSize:8,fontWeight:700,padding:"1px 5px",borderRadius:99}}>RVT {swRevit}</span>}
+                        {swC3D>0&&<span style={{background:"#f59e0b20",color:"#f59e0b",fontSize:8,fontWeight:700,padding:"1px 5px",borderRadius:99}}>C3D {swC3D}</span>}
+                      </div>
+                    </td>
                     <td style={{...S2.tdc,color:"#f59e0b",fontSize:11,fontWeight:600}}>
                       {proj.entrega ? fmtShort(parseD(proj.entrega)) : "—"}
                     </td>
@@ -767,12 +813,18 @@ function ReportView({ projects, people, assignments }) {
 
       {/* Team load */}
       <div style={S2.section}>
-        <div style={S2.sectTitle}>Carga del equipo</div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:8}}>
+        <div style={S2.sectTitle}>Carga del equipo · software y rol</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:8}}>
           {activos.map(person => {
             const h    = loadByPerson[person.id] || 0;
             const pct  = Math.round(h / MAX_H * 100);
             const col  = pct>=100?"#ef4444":pct>=85?"#f59e0b":"#22c55e";
+            const swColor = person.software==="Civil 3D"?"#f59e0b":person.software==="Ambos"?"#22c55e":"#3b82f6";
+            // Rol breakdown from assignments
+            const pAsgns = assignments.filter(a=>a.personId===person.id);
+            const hMod = pAsgns.filter(a=>a.rol==="Modelado").reduce((s,a)=>s+a.horas,0);
+            const hCoo = pAsgns.filter(a=>a.rol==="Coordinación").reduce((s,a)=>s+a.horas,0);
+            const hSin = pAsgns.filter(a=>!a.rol).reduce((s,a)=>s+a.horas,0);
             return (
               <div key={person.id} style={{...S2.card,padding:"10px 14px"}}>
                 <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:6}}>
@@ -782,19 +834,30 @@ function ReportView({ projects, people, assignments }) {
                     fontSize:10,fontWeight:700,color:"#fff"}}>
                     {initials(person.name)}
                   </div>
-                  <div style={{minWidth:0}}>
+                  <div style={{minWidth:0,flex:1}}>
                     <div style={{fontSize:11,fontWeight:700,color:"#e2e8f0",
                       whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{person.name}</div>
                     <div style={{fontSize:9,color:"#64748b"}}>{person.perfil}</div>
                   </div>
+                  <span style={{background:`${swColor}20`,color:swColor,fontSize:8,fontWeight:700,
+                    padding:"2px 6px",borderRadius:99,flexShrink:0,whiteSpace:"nowrap"}}>
+                    {person.software==="Civil 3D"?"C3D":person.software==="Ambos"?"AMP":"RVT"}
+                  </span>
                 </div>
                 <div style={{background:"#0f172a",borderRadius:99,height:5,overflow:"hidden",marginBottom:4}}>
                   <div style={{width:`${Math.min(pct,100)}%`,height:"100%",background:col,borderRadius:99}}/>
                 </div>
-                <div style={{display:"flex",justifyContent:"space-between",fontSize:10}}>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:10,marginBottom:hMod||hCoo?5:0}}>
                   <span style={{color:"#475569"}}>{h}h / {MAX_H}h ref.</span>
                   <span style={{fontWeight:700,color:col}}>{pct}%</span>
                 </div>
+                {(hMod>0||hCoo>0)&&(
+                  <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+                    {hMod>0&&<span style={{background:"#3b82f615",color:"#3b82f6",fontSize:8,fontWeight:700,padding:"1px 6px",borderRadius:99}}>🟦 MOD {hMod}h</span>}
+                    {hCoo>0&&<span style={{background:"#a78bfa15",color:"#a78bfa",fontSize:8,fontWeight:700,padding:"1px 6px",borderRadius:99}}>🟣 COO {hCoo}h</span>}
+                    {hSin>0&&<span style={{background:"#47556920",color:"#64748b",fontSize:8,fontWeight:700,padding:"1px 6px",borderRadius:99}}>— {hSin}h</span>}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -988,6 +1051,8 @@ function App() {
   const [mPersonId,   setMPersonId]   = useState("");
   const [mProjectId,  setMProjectId]  = useState("");
   const [mHoras,      setMHoras]      = useState("");
+  const [mRol,        setMRol]        = useState("Modelado");
+  const [mSoftware,   setMSoftware]   = useState("Revit");
   const [editKey,     setEditKey]     = useState(null);
   const [editVal,     setEditVal]     = useState("");
   const [editProjKey, setEditProjKey] = useState(null);
@@ -1014,8 +1079,12 @@ function App() {
   const asgnByProject = pid => assignments.filter(a=>a.projectId===pid);
   const asgnByPerson  = pid => assignments.filter(a=>a.personId===pid);
 
-  const removeAssignment = (personId,projectId) => {
-    update({assignments:assignments.filter(a=>!(a.personId===personId&&a.projectId===projectId))});
+  const removeAssignment = (personId,projectId,rol=null) => {
+    update({assignments:assignments.filter(a=>{
+      if(a.personId!==personId||a.projectId!==projectId) return true;
+      if(rol!==null) return a.rol!==rol;
+      return false;
+    })});
     showToast("Asignación eliminada");
   };
 
@@ -1025,21 +1094,23 @@ function App() {
     const perId = modal.type==="to-project"?mPersonId:modal.personId;
     const prId  = modal.type==="to-project"?modal.projectId:mProjectId;
     if(!perId||!prId) return;
-    const exists=assignments.find(a=>a.personId===perId&&a.projectId===prId);
+    const exists=assignments.find(a=>a.personId===perId&&a.projectId===prId&&a.rol===mRol);
+    const newEntry={personId:perId,projectId:prId,horas:h,rol:mRol,software:mSoftware};
     const newA=exists
-      ? assignments.map(a=>a.personId===perId&&a.projectId===prId?{...a,horas:a.horas+h}:a)
-      : [...assignments,{personId:perId,projectId:prId,horas:h}];
+      ? assignments.map(a=>a.personId===perId&&a.projectId===prId&&a.rol===mRol?{...a,horas:a.horas+h}:a)
+      : [...assignments,newEntry];
     update({assignments:newA});
-    setModal(null); setMHoras(""); setMPersonId(""); setMProjectId("");
+    setModal(null); setMHoras(""); setMPersonId(""); setMProjectId(""); setMRol("Modelado"); setMSoftware("Revit");
     showToast("Asignación guardada ✓");
   };
 
   const saveEditHoras = () => {
     const h=parseInt(editVal);
     if(!h||h<=0){setEditKey(null);return;}
-    const [perId,prId]=editKey.split("|");
+    const parts=editKey.split("|");
+    const perId=parts[0]; const prId=parts[1]; const rol=parts[2]||null;
     update({assignments:assignments.map(a=>
-      a.personId===perId&&a.projectId===prId?{...a,horas:h}:a)});
+      a.personId===perId&&a.projectId===prId&&(rol===null||a.rol===rol||(!a.rol&&rol===""))?{...a,horas:h}:a)});
     setEditKey(null);
     showToast("Horas actualizadas ✓");
   };
@@ -1246,7 +1317,7 @@ function App() {
             Equipo — {asgns.length} personas · {asgns.reduce((s,a)=>s+a.horas,0)}h
           </div>
           <button style={S.btn("primary")}
-            onClick={()=>{setModal({type:"to-project",projectId:proj.id});setMPersonId("");setMHoras("");}}>
+            onClick={()=>{setModal({type:"to-project",projectId:proj.id});setMPersonId("");setMHoras("");setMRol("Modelado");setMSoftware("Revit");}}>
             + Asignar persona
           </button>
         </div>
@@ -1256,37 +1327,51 @@ function App() {
           const person=people.find(p=>p.id===a.personId);
           if(!person) return null;
           const sc=statusColor(person.status);
-          const key=`${a.personId}|${a.projectId}`;
+          const key=`${a.personId}|${a.projectId}|${a.rol||""}`;
           const isEd=editKey===key;
+          const rolColor=a.rol==="Coordinación"?"#a78bfa":"#3b82f6";
+          const swColor=a.software==="Civil 3D"?"#f59e0b":a.software==="Navisworks"?"#22c55e":"#3b82f6";
           return (
-            <div key={a.personId} style={S.row}>
-              <div style={{display:"flex",gap:10,alignItems:"center"}}>
-                <Avatar name={person.name} status={person.status}/>
-                <div>
-                  <div style={{fontSize:13,fontWeight:600,color:"#e2e8f0"}}>{person.name}</div>
-                  <div style={{fontSize:11,color:"#64748b"}}>{person.perfil}</div>
-                </div>
-              </div>
-              <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                <Badge bg={sc.bg} text={sc.text}>{person.status}</Badge>
-                {isEd?(
-                  <div style={{display:"flex",gap:4,alignItems:"center"}}>
-                    <input type="number" value={editVal} autoFocus
-                      onChange={e=>setEditVal(e.target.value)}
-                      onKeyDown={e=>e.key==="Enter"&&saveEditHoras()}
-                      style={{...S.inp,width:75,marginTop:0,padding:"5px 8px",textAlign:"center"}}/>
-                    <button style={S.btn("primary")} onClick={saveEditHoras}>✓</button>
-                    <button style={S.btn("ghost")} onClick={()=>setEditKey(null)}>✕</button>
+            <div key={key} style={{...S.row,flexDirection:"column",alignItems:"stretch",gap:6}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div style={{display:"flex",gap:10,alignItems:"center"}}>
+                  <Avatar name={person.name} status={person.status}/>
+                  <div>
+                    <div style={{fontSize:13,fontWeight:600,color:"#e2e8f0"}}>{person.name}</div>
+                    <div style={{fontSize:11,color:"#64748b"}}>{person.perfil}</div>
                   </div>
-                ):(
-                  <button style={S.num} title="Clic para editar"
-                    onClick={()=>{setEditKey(key);setEditVal(String(a.horas));}}>
-                    {a.horas}h
+                </div>
+                <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                  {/* Rol badge */}
+                  <span style={{background:`${rolColor}20`,color:rolColor,fontSize:10,fontWeight:700,
+                    padding:"2px 8px",borderRadius:20,whiteSpace:"nowrap",border:`1px solid ${rolColor}40`}}>
+                    {a.rol==="Coordinación"?"🟣 COO":"🟦 MOD"}
+                  </span>
+                  {/* Software badge */}
+                  <span style={{background:`${swColor}15`,color:swColor,fontSize:10,fontWeight:700,
+                    padding:"2px 8px",borderRadius:20,whiteSpace:"nowrap"}}>
+                    {a.software||"Revit"}
+                  </span>
+                  <Badge bg={sc.bg} text={sc.text}>{person.status}</Badge>
+                  {isEd?(
+                    <div style={{display:"flex",gap:4,alignItems:"center"}}>
+                      <input type="number" value={editVal} autoFocus
+                        onChange={e=>setEditVal(e.target.value)}
+                        onKeyDown={e=>e.key==="Enter"&&saveEditHoras()}
+                        style={{...S.inp,width:75,marginTop:0,padding:"5px 8px",textAlign:"center"}}/>
+                      <button style={S.btn("primary")} onClick={saveEditHoras}>✓</button>
+                      <button style={S.btn("ghost")} onClick={()=>setEditKey(null)}>✕</button>
+                    </div>
+                  ):(
+                    <button style={S.num} title="Clic para editar"
+                      onClick={()=>{setEditKey(key);setEditVal(String(a.horas));}}>
+                      {a.horas}h
+                    </button>
+                  )}
+                  <button style={S.btn("ghost")} onClick={()=>removeAssignment(a.personId,a.projectId,a.rol)}>
+                    <span style={{color:"#ef4444",fontSize:16}}>×</span>
                   </button>
-                )}
-                <button style={S.btn("ghost")} onClick={()=>removeAssignment(a.personId,a.projectId)}>
-                  <span style={{color:"#ef4444",fontSize:16}}>×</span>
-                </button>
+                </div>
               </div>
             </div>
           );
@@ -1378,7 +1463,8 @@ function App() {
             Horas por proyecto — {asgns.length}
           </div>
           <button style={S.btn("primary")}
-            onClick={()=>{setModal({type:"to-person",personId:person.id});setMProjectId("");setMHoras("");}}>
+            onClick={()=>{setModal({type:"to-person",personId:person.id});setMProjectId("");setMHoras("");setMRol("Modelado");
+              const sw=person.software==="Ambos"?"Revit":person.software||"Revit"; setMSoftware(sw);}}>
             + Asignar proyecto
           </button>
         </div>
@@ -1389,9 +1475,10 @@ function App() {
 
         {/* Column labels */}
         {asgns.length>0&&(
-          <div style={{display:"grid",gridTemplateColumns:"1fr 80px 80px 120px 28px",
+          <div style={{display:"grid",gridTemplateColumns:"1fr auto 80px 80px 120px 28px",
             gap:8,paddingBottom:6,marginBottom:4,borderBottom:"1px solid #1e3a5f"}}>
             <div style={{fontSize:10,color:"#475569",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.4px"}}>Proyecto</div>
+            <div style={{fontSize:10,color:"#475569",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.4px"}}>Rol · SW</div>
             <div style={{fontSize:10,color:"#475569",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.4px",textAlign:"right"}}>Asignadas</div>
             <div style={{fontSize:10,color:"#3b82f6",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.4px",textAlign:"right"}}>Reales</div>
             <div style={{fontSize:10,color:"#475569",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.4px",textAlign:"center"}}>Ejecución</div>
@@ -1399,21 +1486,23 @@ function App() {
           </div>
         )}
 
-        {asgns.map(a=>{
+        {asgns.map((a,idx)=>{
           const proj      = projects.find(p=>p.id===a.projectId);
           if(!proj) return null;
           const reales    = a.horasReales || 0;
           const pctEjec   = a.horas > 0 ? Math.round(reales/a.horas*100) : 0;
           const color     = tipoColor(proj.tipo);
-          const key       = `${a.personId}|${a.projectId}`;
+          const key       = `${a.personId}|${a.projectId}|${a.rol||""}`;
           const realKey   = `real|${key}`;
           const isEdAsig  = editKey===key;
           const isEdReal  = editRealKey===realKey;
           const ejColor   = pctEjec>=100?"#ef4444":pctEjec>=80?"#f59e0b":"#22c55e";
+          const rolColor  = a.rol==="Coordinación"?"#a78bfa":"#3b82f6";
+          const swColor   = a.software==="Civil 3D"?"#f59e0b":a.software==="Navisworks"?"#22c55e":"#3b82f6";
 
           return (
-            <div key={a.projectId}
-              style={{display:"grid",gridTemplateColumns:"1fr 80px 80px 120px 28px",
+            <div key={`${a.projectId}|${a.rol||idx}`}
+              style={{display:"grid",gridTemplateColumns:"1fr auto 80px 80px 120px 28px",
                 gap:8,alignItems:"center",padding:"10px 0",borderBottom:"1px solid #0f172a"}}>
 
               {/* Project info */}
@@ -1421,12 +1510,28 @@ function App() {
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
                   <div style={{width:8,height:8,borderRadius:2,background:color,flexShrink:0}}/>
                   <div style={{fontSize:13,fontWeight:600,color:"#e2e8f0",
-                    whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:180}}>
+                    whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:160}}>
                     {proj.name}
                   </div>
                   <Badge bg={`${color}20`} text={color}>{proj.tipo}</Badge>
                 </div>
                 <div style={{fontSize:10,color:"#475569",marginTop:2,marginLeft:14}}>{proj.client}</div>
+              </div>
+
+              {/* Rol + Software badges */}
+              <div style={{display:"flex",flexDirection:"column",gap:3,alignItems:"flex-start"}}>
+                {a.rol&&(
+                  <span style={{background:`${rolColor}20`,color:rolColor,fontSize:9,fontWeight:700,
+                    padding:"2px 7px",borderRadius:20,whiteSpace:"nowrap",border:`1px solid ${rolColor}30`}}>
+                    {a.rol==="Coordinación"?"🟣 COO":"🟦 MOD"}
+                  </span>
+                )}
+                {a.software&&(
+                  <span style={{background:`${swColor}15`,color:swColor,fontSize:9,fontWeight:700,
+                    padding:"2px 7px",borderRadius:20,whiteSpace:"nowrap"}}>
+                    {a.software}
+                  </span>
+                )}
               </div>
 
               {/* Horas asignadas — editable */}
@@ -1472,15 +1577,12 @@ function App() {
               {/* Mini execution bar */}
               <div style={{display:"flex",flexDirection:"column",gap:3}}>
                 <div style={{background:"#0f172a",borderRadius:99,height:6,overflow:"hidden",position:"relative"}}>
-                  {/* asignadas: full track */}
                   <div style={{position:"absolute",inset:0,background:"#334155",borderRadius:99}}/>
-                  {/* reales: fill */}
                   <div style={{
                     position:"absolute",left:0,top:0,bottom:0,
                     width:`${Math.min(pctEjec,100)}%`,
                     background:ejColor,borderRadius:99,transition:"width .3s"
                   }}/>
-                  {/* overflow indicator */}
                   {pctEjec>100&&(
                     <div style={{position:"absolute",right:0,top:0,bottom:0,width:3,background:"#ef4444",borderRadius:99}}/>
                   )}
@@ -1491,7 +1593,7 @@ function App() {
               </div>
 
               {/* Remove */}
-              <button style={S.btn("ghost")} onClick={()=>removeAssignment(a.personId,a.projectId)}>
+              <button style={S.btn("ghost")} onClick={()=>removeAssignment(a.personId,a.projectId,a.rol)}>
                 <span style={{color:"#ef4444",fontSize:14}}>×</span>
               </button>
 
@@ -1833,10 +1935,14 @@ function App() {
             {modal.type==="to-project"?(
               <div>
                 <label style={S.lbl}>Persona</label>
-                <select value={mPersonId} onChange={e=>setMPersonId(e.target.value)} style={S.sel}>
+                <select value={mPersonId} onChange={e=>{
+                  setMPersonId(e.target.value);
+                  const p=people.find(x=>x.id===e.target.value);
+                  if(p?.software) setMSoftware(p.software==="Ambos"?"Revit":p.software);
+                }} style={S.sel}>
                   <option value="">— Seleccionar —</option>
                   {people.filter(p=>p.status!=="Baja médica").map(p=>(
-                    <option key={p.id} value={p.id}>{p.name} ({p.perfil})</option>
+                    <option key={p.id} value={p.id}>{p.name} ({p.perfil} · {p.software||"Revit"})</option>
                   ))}
                 </select>
               </div>
@@ -1849,6 +1955,31 @@ function App() {
                 </select>
               </div>
             )}
+            {/* ROL + SOFTWARE row */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:14}}>
+              <div>
+                <label style={S.lbl}>Rol en el proyecto</label>
+                <select value={mRol} onChange={e=>setMRol(e.target.value)} style={S.sel}>
+                  <option value="Modelado">🟦 Modelado</option>
+                  <option value="Coordinación">🟣 Coordinación</option>
+                </select>
+              </div>
+              <div>
+                <label style={S.lbl}>Software</label>
+                <select value={mSoftware} onChange={e=>setMSoftware(e.target.value)} style={S.sel}>
+                  <option value="Revit">Revit</option>
+                  <option value="Civil 3D">Civil 3D</option>
+                  <option value="Navisworks">Navisworks</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </div>
+            </div>
+            {/* Rol helper */}
+            <div style={{marginTop:6,padding:"6px 10px",background:"#0f172a",borderRadius:6,fontSize:11,color:"#64748b"}}>
+              {mRol==="Modelado"
+                ? "🟦 Las horas se descontarán de la bolsa de Modelado del proyecto"
+                : "🟣 Las horas se descontarán de la bolsa de Coordinación del proyecto"}
+            </div>
             <div style={{marginTop:14}}>
               <label style={S.lbl}>Horas asignadas</label>
               <input type="number" placeholder="ej. 80" value={mHoras}
