@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>CBS BIM Office — Gestión 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0f172a;font-family:'DM Sans',sans-serif;color:#e2e8f0;min-height:100vh}
+  select option{background:#1e293b;color:#e2e8f0}
+  ::-webkit-scrollbar{width:6px;height:6px}
+  ::-webkit-scrollbar-track{background:#0f172a}
+  ::-webkit-scrollbar-thumb{background:#334155;border-radius:3px}
+  input[type=number]::-webkit-inner-spin-button{opacity:1}
+  .gantt-bar{transition:opacity .15s}
+  .gantt-bar:hover{opacity:.85;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useMemo, useRef, useCallback } = React;
+
+// ─── DATA ─────────────────────────────────────────────────────────────────────
+
+const PROJECTS_DEFAULT = [
+  { id:"OT_AZVI_Metro",       name:"AZVI Metro",          client:"AZVI",     status:"En curso", horasOferta:164,  horasConsumidas:80,  tipo:"COO", bimId:"BIM-24000163", inicio:"2026-01-01", fin:"2026-06-30", entrega:"2026-06-15" },
+  { id:"OT_ASCH_Somosaguas",  name:"ASCH Somosaguas",     client:"ASCH",     status:"En curso", horasOferta:311,  horasConsumidas:200, tipo:"MOD", bimId:"BIM-24000132", inicio:"2025-09-01", fin:"2026-02-28", entrega:"2026-02-20" },
+  { id:"OT_Edhinor_CND",      name:"Edhinor Canal Norte", client:"Edhinor",  status:"En curso", horasOferta:950,  horasConsumidas:600, tipo:"COO", bimId:"BIM-24000068", inicio:"2025-06-01", fin:"2026-04-30", entrega:"2026-04-15" },
+  { id:"OT_FSDC_M1",          name:"FSDC Módulo 1",       client:"FSDC",     status:"En curso", horasOferta:196,  horasConsumidas:160, tipo:"MOD", bimId:"BIM-24000107", inicio:"2025-01-01", fin:"2026-03-31", entrega:"2026-03-20" },
+  { id:"OT_GBPA_Ifema",       name:"GBPA IFEMA",          client:"GBPA",     status:"En curso", horasOferta:466,  horasConsumidas:300, tipo:"MOD", bimId:"BIM-24000158", inicio:"2025-03-01", fin:"2026-05-31", entrega:"2026-05-15" },
+  { id:"OT_Negratin_Guayepo", name:"Negratin-Guayepe",    client:"Ingiopsa", status:"En curso", horasOferta:245,  horasConsumidas:180, tipo:"MOD", bimId:"BIM-24000099", inicio:"2025-04-01", fin:"2026-06-30", entrega:"2026-06-01" },
+  { id:"OT_Dragados_Mesena",  name:"Dragados Mesena",     client:"Dragados", status:"En curso", horasOferta:400,  horasConsumidas:120, tipo:"COO", bimId:"BIM-25000021", inicio:"2025-10-01", fin:"2026-07-31", entrega:"2026-07-15" },
+  { id:"OT_Vamed_Hospital",   name:"VAMED Hospital",      client:"VAMED",    status:"En curso", horasOferta:300,  horasConsumidas:60,  tipo:"MOD", bimId:"BIM-25000067", inicio:"2025-11-01", fin:"2026-08-31", entrega:"2026-08-01" },
+  { id:"OT_FR_SNCF_LigneRER", name:"SNCF Ligne RER P",    client:"SNCF",     status:"En curso", horasOferta:200,  horasConsumidas:80,  tipo:"BEP", bimId:"BIM-25000051", inicio:"2025-09-01", fin:"2026-09-30", entrega:"2026-09-01" },
+  { id:"OT_AMBR_Zamudio",     name:"AMBR Zamudio",        client:"AMBR",     status:"En curso", horasOferta:320,  horasConsumidas:250, tipo:"MOD", bimId:"BIM-25000065", inicio:"2025-07-01", fin:"2026-04-30", entrega:"2026-04-01" },
+  { id:"OT_DRAGADOS_HUESNA",  name:"Dragados Huesna",     client:"Dragados", status:"Inicio",   horasOferta:280,  horasConsumidas:20,  tipo:"MOD", bimId:"BIM-26000015", inicio:"2026-02-01", fin:"2026-12-31", entrega:"2026-12-01" },
+  { id:"OT_FR_POTENCES",      name:"FR Potences",         client:"SNCF",     status:"Inicio",   horasOferta:120,  horasConsumidas:10,  tipo:"MOD", bimId:"BIM-26000004", inicio:"2026-02-15", fin:"2026-06-30", entrega:"2026-06-15" },
+  { id:"OT_CALAF",            name:"CALAF",               client:"CBS Int.", status:"En curso", horasOferta:90,   horasConsumidas:40,  tipo:"AT",  bimId:"BIM-26000008", inicio:"2026-01-01", fin:"2026-03-31", entrega:"2026-03-25" },
+  { id:"OT_WEBBER_P6B",       name:"Webber P6B",          client:"Webber",   status:"En curso", horasOferta:200,  horasConsumidas:150, tipo:"MOD", bimId:"BIM-25000118", inicio:"2025-06-01", fin:"2026-04-30", entrega:"2026-04-15" },
+  { id:"CO_SACYR",            name:"Coordinación Sacyr",  client:"SACYR",    status:"En curso", horasOferta:40,   horasConsumidas:20,  tipo:"AT",  bimId:"BIM-25000079", inicio:"2025-11-01", fin:"2026-06-30", entrega:"2026-06-01" },
+  { id:"OT_OSÉS_BIM",         name:"Osés BIM",            client:"Osés",     status:"Inicio",   horasOferta:160,  horasConsumidas:0,   tipo:"COO", bimId:"BIM-26000018", inicio:"2026-03-01", fin:"2026-12-31", entrega:"2026-11-30" },
+];
+
+const PEOPLE_DEFAULT = [
+  { id:"p01", name:"Arantxa Herrera García",  perfil:"Arquitecta BIM",    ubicacion:"Madrid",      status:"Activa"      },
+  { id:"p02", name:"Isabel Castro",           perfil:"Arquitecta BIM",    ubicacion:"Madrid",      status:"Activa"      },
+  { id:"p03", name:"Natalia Castán",          perfil:"BIM Modelador",     ubicacion:"Sevilla",     status:"Activa"      },
+  { id:"p04", name:"Orestes López",           perfil:"Ing. Civil BIM",    ubicacion:"Madrid",      status:"Activo"      },
+  { id:"p05", name:"Beatriz Pérez",           perfil:"BIM Coord.",        ubicacion:"Madrid",      status:"Baja médica" },
+  { id:"p06", name:"Carmen Liscano",          perfil:"BIM Modelador",     ubicacion:"Madrid",      status:"Activa"      },
+  { id:"p07", name:"Ana María Herrera",       perfil:"BIM Coord. Senior", ubicacion:"Madrid",      status:"Activa"      },
+  { id:"p08", name:"Gema Peluc",              perfil:"BIM Coord.",        ubicacion:"Argentina",   status:"Remota"      },
+  { id:"p09", name:"Andrea de la Cruz",       perfil:"CAD/BIM Draftsman", ubicacion:"Madrid",      status:"Activa"      },
+  { id:"p10", name:"Pablo Díaz Reyes",        perfil:"Ing. Civil BIM",    ubicacion:"Madrid",      status:"Activo"      },
+  { id:"p11", name:"Yanina Gisel Gauna",      perfil:"BIM Modelador",     ubicacion:"Argentina",   status:"Remota"      },
+  { id:"p12", name:"Katherinne Artica",       perfil:"BIM Modelador",     ubicacion:"Fuenlabrada", status:"Activa"      },
+  { id:"p13", name:"Anthony Maradiaga",       perfil:"BIM Modelador STR", ubicacion:"Sevilla",     status:"Activo"      },
+  { id:"p14", name:"Pablo Elias Suárez",      perfil:"BIM Coord.",        ubicacion:"Valencia",    status:"Activo"      },
+  { id:"p15", name:"Diego Rodríguez Uberto",  perfil:"Ing. Civil C3D",    ubicacion:"A Coruña",    status:"Activo"      },
+  { id:"p16", name:"Julián Roa",              perfil:"BIM Modelador",     ubicacion:"Madrid",      status:"Activo"      },
+  { id:"p17", name:"Guillermo Soffi",         perfil:"BIM Modelador",     ubicacion:"Madrid",      status:"Activo"      },
+  { id:"p18", name:"Angélica Sosa",           perfil:"BIM Coord.",        ubicacion:"Madrid",      status:"Activa"      },
+  { id:"p19", name:"Adriano Teruel",          perfil:"Ing. Caminos BIM",  ubicacion:"Madrid",      status:"Activo"      },
+  { id:"p20", name:"Antonio Cordero",         perfil:"BIM Manager FR",    ubicacion:"Madrid",      status:"Activo"      },
+  { id:"p21", name:"Borja Martín",            perfil:"BIM Coord.",        ubicacion:"Madrid",      status:"Activo"      },
+  { id:"p22", name:"Bryan Rayo",              perfil:"BIM Modelador",     ubicacion:"Madrid",      status:"Activo"      },
+  { id:"p23", name:"Virginia Bringas",        perfil:"BIM Coord.",        ubicacion:"Madrid",      status:"Activa"      },
+  { id:"p24", name:"Jesús Corral",            perfil:"BIM Modelador",     ubicacion:"Madrid",      status:"Activo"      },
+  { id:"p25", name:"Mónica Ramírez",          perfil:"BIM Coord.",        ubicacion:"Ciudad Real", status:"Sin asignar" },
+  { id:"p26", name:"Samuel Rivas",            perfil:"CAD Modelador C3D", ubicacion:"Madrid",      status:"Activo"      },
+];
+
+const ASSIGNMENTS_DEFAULT = [
+  {personId:"p01",projectId:"OT_ASCH_Somosaguas", horas:90,  horasReales:72 },
+  {personId:"p01",projectId:"OT_GBPA_Ifema",       horas:90,  horasReales:55 },
+  {personId:"p02",projectId:"OT_ASCH_Somosaguas",  horas:110, horasReales:98 },
+  {personId:"p03",projectId:"OT_GBPA_Ifema",        horas:80,  horasReales:60 },
+  {personId:"p04",projectId:"OT_Edhinor_CND",       horas:260, horasReales:210},
+  {personId:"p04",projectId:"OT_Negratin_Guayepo",  horas:90,  horasReales:75 },
+  {personId:"p06",projectId:"OT_Edhinor_CND",       horas:80,  horasReales:65 },
+  {personId:"p06",projectId:"OT_Dragados_Mesena",   horas:50,  horasReales:30 },
+  {personId:"p07",projectId:"OT_GBPA_Ifema",        horas:100, horasReales:80 },
+  {personId:"p07",projectId:"OT_Dragados_Mesena",   horas:100, horasReales:40 },
+  {personId:"p08",projectId:"OT_Dragados_Mesena",   horas:60,  horasReales:28 },
+  {personId:"p09",projectId:"OT_FSDC_M1",           horas:70,  horasReales:62 },
+  {personId:"p10",projectId:"OT_AMBR_Zamudio",      horas:170, horasReales:145},
+  {personId:"p10",projectId:"OT_FSDC_M1",           horas:80,  horasReales:70 },
+  {personId:"p11",projectId:"OT_GBPA_Ifema",        horas:80,  horasReales:55 },
+  {personId:"p11",projectId:"OT_Negratin_Guayepo",  horas:60,  horasReales:48 },
+  {personId:"p12",projectId:"OT_AMBR_Zamudio",      horas:90,  horasReales:70 },
+  {personId:"p13",projectId:"OT_GBPA_Ifema",        horas:100, horasReales:78 },
+  {personId:"p14",projectId:"OT_FR_SNCF_LigneRER",  horas:40,  horasReales:22 },
+  {personId:"p15",projectId:"OT_DRAGADOS_HUESNA",   horas:20,  horasReales:8  },
+  {personId:"p16",projectId:"OT_AZVI_Metro",        horas:50,  horasReales:38 },
+  {personId:"p17",projectId:"OT_Vamed_Hospital",    horas:30,  horasReales:12 },
+  {personId:"p18",projectId:"OT_DRAGADOS_HUESNA",   horas:30,  horasReales:10 },
+  {personId:"p18",projectId:"OT_Edhinor_CND",       horas:30,  horasReales:22 },
+  {personId:"p19",projectId:"OT_Vamed_Hospital",    horas:30,  horasReales:14 },
+  {personId:"p20",projectId:"OT_FR_SNCF_LigneRER",  horas:60,  horasReales:45 },
+  {personId:"p20",projectId:"OT_FR_POTENCES",       horas:30,  horasReales:8  },
+  {personId:"p21",projectId:"OT_WEBBER_P6B",        horas:80,  horasReales:62 },
+  {personId:"p22",projectId:"OT_FR_SNCF_LigneRER",  horas:40,  horasReales:28 },
+  {personId:"p23",projectId:"OT_CALAF",             horas:40,  horasReales:32 },
+  {personId:"p23",projectId:"CO_SACYR",             horas:20,  horasReales:15 },
+  {personId:"p24",projectId:"OT_WEBBER_P6B",        horas:60,  horasReales:50 },
+  {personId:"p26",projectId:"OT_DRAGADOS_HUESNA",   horas:20,  horasReales:8  },
+];
+
+const STORAGE_KEY = "cbs_bim_2026_v2";
+const MAX_H = 160;
+const TODAY = new Date("2026-03-10");
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+
+const initials = n => n.split(" ").map(x=>x[0]).slice(0,2).join("").toUpperCase();
+const parseD   = s => new Date(s + "T00:00:00");
+const fmtD     = d => d.toLocaleDateString("es-ES",{day:"2-digit",month:"short",year:"numeric"});
+const fmtShort = d => d.toLocaleDateString("es-ES",{day:"2-digit",month:"short"});
+
+const statusColor = s => {
+  if(s==="Activo"||s==="Activa") return {bg:"#d1fae5",text:"#065f46"};
+  if(s==="Remota")               return {bg:"#dbeafe",text:"#1e40af"};
+  if(s==="Baja médica")          return {bg:"#fee2e2",text:"#991b1b"};
+  if(s==="Sin asignar")          return {bg:"#fef3c7",text:"#92400e"};
+  return {bg:"#f3f4f6",text:"#374151"};
+};
+
+const rentColor = (o,c) => {
+  if(!o) return {bg:"#1e293b",text:"#64748b",label:"—"};
+  const p=c/o*100;
+  if(p<=85)  return {bg:"#d1fae5",text:"#065f46",label:"✓ OK"};
+  if(p<=100) return {bg:"#fef3c7",text:"#92400e",label:"⚠ Alerta"};
+  return {bg:"#fee2e2",text:"#991b1b",label:"✕ Riesgo"};
+};
+
+const tipoColor = t => ({COO:"#3b82f6",MOD:"#22c55e",BEP:"#f59e0b",AT:"#a78bfa"}[t]||"#64748b");
+
+const progressColor = p => p>=100?"#ef4444":p>=85?"#f59e0b":"#22c55e";
+
+// Distinct palette for Gantt bars
+const GANTT_COLORS = [
+  "#3b82f6","#22c55e","#f59e0b","#a78bfa","#ec4899",
+  "#14b8a6","#f97316","#06b6d4","#84cc16","#e11d48",
+  "#8b5cf6","#10b981","#facc15","#ef4444","#0ea5e9","#d946ef"
+];
+
+// ─── SMALL COMPONENTS ─────────────────────────────────────────────────────────
+
+const Badge = ({bg,text,children}) => (
+  <span style={{background:bg,color:text,fontSize:10,fontWeight:700,
+    padding:"3px 8px",borderRadius:20,letterSpacing:"0.3px",whiteSpace:"nowrap"}}>
+    {children}
+  </span>
+);
+
+const Bar = ({pct,width=80}) => (
+  <div style={{background:"#0f172a",borderRadius:99,height:6,overflow:"hidden",width}}>
+    <div style={{width:`${Math.min(pct,100)}%`,height:"100%",
+      background:progressColor(pct),borderRadius:99,transition:"width .3s"}}/>
+  </div>
+);
+
+const Avatar = ({name,status,size=34}) => (
+  <div style={{width:size,height:size,borderRadius:"50%",flexShrink:0,
+    background:status==="Baja médica"?"#334155":"linear-gradient(135deg,#3b82f6,#8b5cf6)",
+    display:"flex",alignItems:"center",justifyContent:"center",
+    fontSize:size*0.35,fontWeight:700,color:"#fff"}}>
+    {initials(name)}
+  </div>
+);
+
+// ─── GANTT CALENDAR VIEW ──────────────────────────────────────────────────────
+
+function GanttView({ projects, assignments }) {
+
+  const [ganttYear, setGanttYear] = useState(2026);
+  const [tooltip,   setTooltip]   = useState(null); // {proj, x, y}
+  const [filterTipo, setFilterTipo] = useState("Todos");
+  const scrollRef = useRef(null);
+
+  const MONTHS = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+  const ROW_H  = 38;
+  const LABEL_W = 200;
+  const MONTH_W = 90;
+  const TOTAL_W = MONTHS.length * MONTH_W;
+
+  // year range: show selected year + the previous one for multi-year bars
+  const yearStart = new Date(`${ganttYear}-01-01T00:00:00`);
+  const yearEnd   = new Date(`${ganttYear}-12-31T23:59:59`);
+  const totalMs   = yearEnd - yearStart;
+
+  const pctX = (date) => {
+    const d = typeof date === "string" ? parseD(date) : date;
+    return Math.max(0, Math.min(1, (d - yearStart) / totalMs));
+  };
+
+  // Sort projects by start date
+  const tipos = ["Todos","COO","MOD","BEP","AT"];
+  const sorted = [...projects]
+    .filter(p => filterTipo === "Todos" || p.tipo === filterTipo)
+    .filter(p => {
+      // show if overlaps with selected year
+      const s = parseD(p.inicio), e = parseD(p.fin);
+      return s <= yearEnd && e >= yearStart;
+    })
+    .sort((a,b) => parseD(a.inicio) - parseD(b.inicio));
+
+  // Simultaneous projects per month (for the load chart)
+  const loadPerMonth = MONTHS.map((_,mi) => {
+    const mStart = new Date(ganttYear, mi, 1);
+    const mEnd   = new Date(ganttYear, mi+1, 0);
+    return sorted.filter(p => {
+      const s = parseD(p.inicio), e = parseD(p.fin);
+      return s <= mEnd && e >= mStart;
+    }).length;
+  });
+
+  const maxLoad = Math.max(...loadPerMonth, 1);
+
+  // Today line position
+  const todayPct = pctX(TODAY);
+  const todayInYear = TODAY >= yearStart && TODAY <= yearEnd;
+
+  const handleBarHover = (e, proj) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setTooltip({ proj, x: e.clientX, y: e.clientY });
+  };
+
+  return (
+    <div style={{paddingBottom:40}}>
+
+      {/* Controls */}
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20,flexWrap:"wrap",gap:10}}>
+        <div>
+          <div style={{fontSize:18,fontWeight:800,color:"#f1f5f9"}}>Calendario de Proyectos</div>
+          <div style={{fontSize:12,color:"#64748b",marginTop:2}}>
+            Vista Gantt · fechas de inicio, finalización y entrega · carga simultánea por mes
+          </div>
+        </div>
+        <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
+          {/* Tipo filter */}
+          <div style={{display:"flex",gap:4,background:"#0f172a",borderRadius:8,padding:3}}>
+            {tipos.map(t=>(
+              <button key={t} onClick={()=>setFilterTipo(t)}
+                style={{border:"none",borderRadius:6,padding:"5px 12px",fontSize:11,fontWeight:600,cursor:"pointer",
+                  background:filterTipo===t?"#3b82f6":"transparent",color:filterTipo===t?"#fff":"#64748b"}}>
+                {t}
+              </button>
+            ))}
+          </div>
+          {/* Year nav */}
+          <div style={{display:"flex",gap:4,alignItems:"center"}}>
+            <button onClick={()=>setGanttYear(y=>y-1)}
+              style={{border:"none",background:"#1e293b",color:"#e2e8f0",borderRadius:8,
+                padding:"6px 12px",cursor:"pointer",fontSize:13,fontWeight:600}}>‹</button>
+            <span style={{fontSize:14,fontWeight:700,color:"#f1f5f9",minWidth:40,textAlign:"center"}}>{ganttYear}</span>
+            <button onClick={()=>setGanttYear(y=>y+1)}
+              style={{border:"none",background:"#1e293b",color:"#e2e8f0",borderRadius:8,
+                padding:"6px 12px",cursor:"pointer",fontSize:13,fontWeight:600}}>›</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Load chart — simultaneous projects */}
+      <div style={{background:"#1e293b",border:"1px solid #1e3a5f",borderRadius:12,padding:"16px 20px",marginBottom:16}}>
+        <div style={{fontSize:11,fontWeight:700,color:"#64748b",textTransform:"uppercase",letterSpacing:"0.5px",marginBottom:12}}>
+          Proyectos simultáneos por mes · máximo {maxLoad}
+        </div>
+        <div style={{display:"flex",gap:3,alignItems:"flex-end",height:60}}>
+          {loadPerMonth.map((n,mi)=>{
+            const h = maxLoad > 0 ? Math.round((n/maxLoad)*52)+8 : 8;
+            const isHigh = n >= 10;
+            const isMed  = n >= 6 && n < 10;
+            const color  = isHigh?"#ef4444":isMed?"#f59e0b":"#3b82f6";
+            const isCurrentMonth = TODAY.getFullYear()===ganttYear && TODAY.getMonth()===mi;
+            return (
+              <div key={mi} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                <div style={{fontSize:10,fontWeight:700,color}}>
+                  {n>0?n:""}
+                </div>
+                <div style={{width:"100%",height:h,background:color,
+                  borderRadius:"4px 4px 0 0",opacity:isCurrentMonth?1:0.65,
+                  border:isCurrentMonth?`2px solid ${color}`:"2px solid transparent",
+                  transition:"height .3s"}}/>
+                <div style={{fontSize:9,color:isCurrentMonth?"#f1f5f9":"#475569",fontWeight:isCurrentMonth?700:400}}>
+                  {MONTHS[mi]}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Gantt */}
+      <div style={{background:"#1e293b",border:"1px solid #1e3a5f",borderRadius:12,overflow:"hidden"}}>
+
+        {/* Header row */}
+        <div style={{display:"flex",borderBottom:"1px solid #0f172a",position:"sticky",top:0,zIndex:10,background:"#162032"}}>
+          <div style={{width:LABEL_W,minWidth:LABEL_W,padding:"10px 16px",
+            fontSize:11,fontWeight:700,color:"#64748b",textTransform:"uppercase",letterSpacing:"0.5px",
+            borderRight:"1px solid #0f172a",flexShrink:0}}>
+            Proyecto
+          </div>
+          <div style={{flex:1,overflowX:"auto"}} ref={scrollRef}>
+            <div style={{display:"flex",minWidth:TOTAL_W}}>
+              {MONTHS.map(m=>(
+                <div key={m} style={{width:MONTH_W,minWidth:MONTH_W,textAlign:"center",
+                  padding:"10px 4px",fontSize:11,fontWeight:700,color:"#64748b",
+                  textTransform:"uppercase",letterSpacing:"0.5px",
+                  borderRight:"1px solid #0f172a"}}>
+                  {m} {ganttYear}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Rows */}
+        {sorted.length === 0 && (
+          <div style={{padding:32,textAlign:"center",color:"#475569",fontSize:13}}>
+            No hay proyectos en {ganttYear} con el filtro seleccionado
+          </div>
+        )}
+
+        {sorted.map((proj, i) => {
+          const startPct  = pctX(proj.inicio);
+          const endPct    = pctX(proj.fin);
+          const entPct    = proj.entrega ? pctX(proj.entrega) : null;
+          const barW      = Math.max(endPct - startPct, 0.01);
+          const color     = GANTT_COLORS[i % GANTT_COLORS.length];
+          const rent      = rentColor(proj.horasOferta, proj.horasConsumidas);
+          const nPersonas = assignments.filter(a=>a.projectId===proj.id).length;
+          const isEven    = i % 2 === 0;
+
+          // progress fill inside bar
+          const consumed  = proj.horasOferta > 0 ? proj.horasConsumidas / proj.horasOferta : 0;
+          const progW     = Math.min(consumed, 1) * barW;
+
+          return (
+            <div key={proj.id}
+              style={{display:"flex",borderBottom:"1px solid #0f172a",
+                background:isEven?"#1e293b":"#162032",minHeight:ROW_H}}>
+
+              {/* Label */}
+              <div style={{width:LABEL_W,minWidth:LABEL_W,padding:"0 12px",
+                display:"flex",alignItems:"center",gap:8,borderRight:"1px solid #0f172a",flexShrink:0}}>
+                <div style={{width:8,height:8,borderRadius:"50%",background:color,flexShrink:0}}/>
+                <div style={{minWidth:0}}>
+                  <div style={{fontSize:11,fontWeight:700,color:"#e2e8f0",
+                    whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:160}}>
+                    {proj.name}
+                  </div>
+                  <div style={{fontSize:9,color:"#475569"}}>{proj.client} · {nPersonas}👤</div>
+                </div>
+              </div>
+
+              {/* Gantt track */}
+              <div style={{flex:1,position:"relative",minWidth:TOTAL_W}}>
+
+                {/* month grid lines */}
+                {MONTHS.map((_,mi)=>(
+                  <div key={mi} style={{position:"absolute",left:`${(mi/12)*100}%`,top:0,bottom:0,
+                    width:1,background:"#0f172a",opacity:0.6}}/>
+                ))}
+
+                {/* today line */}
+                {todayInYear && (
+                  <div style={{position:"absolute",left:`${todayPct*100}%`,top:0,bottom:0,
+                    width:2,background:"#f97316",zIndex:5,opacity:0.9}}/>
+                )}
+
+                {/* bar background (full duration) */}
+                <div
+                  className="gantt-bar"
+                  onMouseEnter={e=>handleBarHover(e,proj)}
+                  onMouseLeave={()=>setTooltip(null)}
+                  style={{
+                    position:"absolute",
+                    left:`${startPct*100}%`,
+                    width:`${barW*100}%`,
+                    top:"50%",transform:"translateY(-50%)",
+                    height:22,borderRadius:4,
+                    background:`${color}30`,
+                    border:`1.5px solid ${color}70`,
+                    overflow:"hidden",
+                  }}>
+                  {/* progress fill */}
+                  <div style={{
+                    position:"absolute",left:0,top:0,bottom:0,
+                    width:`${progW/barW*100}%`,
+                    background:`${color}80`,
+                    borderRadius:"3px 0 0 3px",
+                  }}/>
+                  {/* label inside bar if wide enough */}
+                  {barW > 0.12 && (
+                    <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",
+                      paddingLeft:6,fontSize:9,fontWeight:700,color:"#f1f5f9",
+                      whiteSpace:"nowrap",overflow:"hidden",zIndex:2}}>
+                      {proj.name}
+                    </div>
+                  )}
+                </div>
+
+                {/* entrega diamond */}
+                {entPct !== null && entPct >= 0 && entPct <= 1 && (
+                  <div
+                    onMouseEnter={e=>setTooltip({proj,x:e.clientX,y:e.clientY,isEntrega:true})}
+                    onMouseLeave={()=>setTooltip(null)}
+                    style={{
+                      position:"absolute",
+                      left:`${entPct*100}%`,
+                      top:"50%",transform:"translate(-50%,-50%) rotate(45deg)",
+                      width:10,height:10,
+                      background:color,
+                      border:"2px solid #0f172a",
+                      zIndex:6,cursor:"pointer",
+                    }}/>
+                )}
+
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Legend */}
+        <div style={{padding:"12px 16px",display:"flex",gap:20,alignItems:"center",
+          borderTop:"1px solid #0f172a",background:"#0f172a",flexWrap:"wrap"}}>
+          <div style={{display:"flex",alignItems:"center",gap:6,fontSize:10,color:"#64748b"}}>
+            <div style={{width:28,height:8,borderRadius:2,background:"#3b82f630",border:"1.5px solid #3b82f670"}}/>
+            <div style={{width:14,height:8,borderRadius:"2px 0 0 2px",background:"#3b82f680",marginLeft:-14}}/>
+            <span>Duración (relleno = % consumido)</span>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:6,fontSize:10,color:"#64748b"}}>
+            <div style={{width:10,height:10,background:"#a78bfa",transform:"rotate(45deg)",flexShrink:0}}/>
+            <span>Fecha de entrega</span>
+          </div>
+          {todayInYear && (
+            <div style={{display:"flex",alignItems:"center",gap:6,fontSize:10,color:"#64748b"}}>
+              <div style={{width:2,height:16,background:"#f97316",flexShrink:0}}/>
+              <span>Hoy ({fmtShort(TODAY)})</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Tooltip */}
+      {tooltip && (
+        <div style={{
+          position:"fixed",left:tooltip.x+14,top:tooltip.y-10,
+          background:"#1e293b",border:"1px solid #334155",
+          borderRadius:10,padding:"12px 16px",zIndex:200,
+          boxShadow:"0 8px 32px rgba(0,0,0,.5)",minWidth:220,pointerEvents:"none"
+        }}>
+          <div style={{fontSize:13,fontWeight:700,color:"#f1f5f9",marginBottom:6}}>
+            {tooltip.proj.name}
+          </div>
+          {tooltip.isEntrega ? (
+            <div style={{fontSize:11,color:"#f59e0b",fontWeight:600}}>
+              🔔 Entrega: {fmtD(parseD(tooltip.proj.entrega))}
+            </div>
+          ) : (
+            <>
+              <div style={{fontSize:11,color:"#94a3b8",marginBottom:4}}>
+                {tooltip.proj.client} · {tooltip.proj.bimId}
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"4px 12px",fontSize:11}}>
+                <span style={{color:"#64748b"}}>Inicio</span>
+                <span style={{color:"#e2e8f0"}}>{fmtD(parseD(tooltip.proj.inicio))}</span>
+                <span style={{color:"#64748b"}}>Fin est.</span>
+                <span style={{color:"#e2e8f0"}}>{fmtD(parseD(tooltip.proj.fin))}</span>
+                {tooltip.proj.entrega&&<><span style={{color:"#64748b"}}>Entrega</span>
+                <span style={{color:"#f59e0b",fontWeight:700}}>{fmtD(parseD(tooltip.proj.entrega))}</span></>}
+                <span style={{color:"#64748b"}}>Horas</span>
+                <span style={{color:"#e2e8f0"}}>{tooltip.proj.horasConsumidas}/{tooltip.proj.horasOferta}h</span>
+                <span style={{color:"#64748b"}}>Avance</span>
+                <span style={{color:progressColor(Math.round(tooltip.proj.horasConsumidas/tooltip.proj.horasOferta*100)),fontWeight:700}}>
+                  {tooltip.proj.horasOferta>0?Math.round(tooltip.proj.horasConsumidas/tooltip.proj.horasOferta*100):0}%
+                </span>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── MAIN APP ─────────────────────────────────────────────────────────────────
+
+function App() {
+
+  const [data, setData] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if(saved) {
+        const parsed = JSON.parse(saved);
+        // migrate: add date fields if missing
+        parsed.projects = parsed.projects.map((p,i) => ({
+          ...PROJECTS_DEFAULT[i] ? {inicio:PROJECTS_DEFAULT[i].inicio,fin:PROJECTS_DEFAULT[i].fin,entrega:PROJECTS_DEFAULT[i].entrega} : {},
+          ...p
+        }));
+        return parsed;
+      }
+    } catch(e){}
+    return { projects: PROJECTS_DEFAULT, people: PEOPLE_DEFAULT, assignments: ASSIGNMENTS_DEFAULT };
+  });
+
+  const { projects, people, assignments } = data;
+
+  const update = (patch) => setData(prev => {
+    const next = {...prev,...patch};
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch(e){}
+    return next;
+  });
+
+  const [view,        setView]        = useState("projects");
+  const [selProject,  setSelProject]  = useState(null);
+  const [selPerson,   setSelPerson]   = useState(null);
+  const [search,      setSearch]      = useState("");
+  const [modal,       setModal]       = useState(null);
+  const [mPersonId,   setMPersonId]   = useState("");
+  const [mProjectId,  setMProjectId]  = useState("");
+  const [mHoras,      setMHoras]      = useState("");
+  const [editKey,     setEditKey]     = useState(null);
+  const [editVal,     setEditVal]     = useState("");
+  const [editProjKey, setEditProjKey] = useState(null);
+  const [editProjVal, setEditProjVal] = useState("");
+  const [toast,       setToast]       = useState(null);
+
+  // Date editing modal
+  const [dateModal,   setDateModal]   = useState(null); // {projectId}
+  const [dInicio,     setDInicio]     = useState("");
+  const [dFin,        setDFin]        = useState("");
+  const [dEntrega,    setDEntrega]    = useState("");
+
+  const showToast = (msg,type="ok") => {
+    setToast({msg,type});
+    setTimeout(()=>setToast(null),2500);
+  };
+
+  const horasByPerson = useMemo(()=>{
+    const m={};
+    for(const a of assignments) m[a.personId]=(m[a.personId]||0)+a.horas;
+    return m;
+  },[assignments]);
+
+  const asgnByProject = pid => assignments.filter(a=>a.projectId===pid);
+  const asgnByPerson  = pid => assignments.filter(a=>a.personId===pid);
+
+  const removeAssignment = (personId,projectId) => {
+    update({assignments:assignments.filter(a=>!(a.personId===personId&&a.projectId===projectId))});
+    showToast("Asignación eliminada");
+  };
+
+  const addAssignment = () => {
+    const h=parseInt(mHoras);
+    if(!h||h<=0) return;
+    const perId = modal.type==="to-project"?mPersonId:modal.personId;
+    const prId  = modal.type==="to-project"?modal.projectId:mProjectId;
+    if(!perId||!prId) return;
+    const exists=assignments.find(a=>a.personId===perId&&a.projectId===prId);
+    const newA=exists
+      ? assignments.map(a=>a.personId===perId&&a.projectId===prId?{...a,horas:a.horas+h}:a)
+      : [...assignments,{personId:perId,projectId:prId,horas:h}];
+    update({assignments:newA});
+    setModal(null); setMHoras(""); setMPersonId(""); setMProjectId("");
+    showToast("Asignación guardada ✓");
+  };
+
+  const saveEditHoras = () => {
+    const h=parseInt(editVal);
+    if(!h||h<=0){setEditKey(null);return;}
+    const [perId,prId]=editKey.split("|");
+    update({assignments:assignments.map(a=>
+      a.personId===perId&&a.projectId===prId?{...a,horas:h}:a)});
+    setEditKey(null);
+    showToast("Horas actualizadas ✓");
+  };
+
+  const saveEditConsumed = () => {
+    const h=parseInt(editProjVal);
+    if(isNaN(h)||h<0){setEditProjKey(null);return;}
+    update({projects:projects.map(p=>p.id===editProjKey?{...p,horasConsumidas:h}:p)});
+    setSelProject(prev=>prev&&prev.id===editProjKey?{...prev,horasConsumidas:h}:prev);
+    setEditProjKey(null);
+    showToast("Horas consumidas actualizadas ✓");
+  };
+
+  const saveDates = () => {
+    if(!dInicio||!dFin){setDateModal(null);return;}
+    update({projects:projects.map(p=>p.id===dateModal.projectId
+      ?{...p,inicio:dInicio,fin:dFin,entrega:dEntrega||p.entrega}:p)});
+    setDateModal(null);
+    showToast("Fechas actualizadas ✓");
+  };
+
+  const updatePersonStatus = (personId,newStatus) => {
+    update({people:people.map(p=>p.id===personId?{...p,status:newStatus}:p)});
+  };
+
+  const filteredProjects = projects.filter(p=>
+    p.name.toLowerCase().includes(search.toLowerCase())||
+    p.client.toLowerCase().includes(search.toLowerCase())||
+    p.id.toLowerCase().includes(search.toLowerCase())
+  );
+  const filteredPeople = people.filter(p=>
+    p.name.toLowerCase().includes(search.toLowerCase())||
+    p.perfil.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const totalOferta    = projects.reduce((s,p)=>s+p.horasOferta,0);
+  const totalConsumidas= projects.reduce((s,p)=>s+p.horasConsumidas,0);
+  const enRiesgo       = projects.filter(p=>p.horasOferta>0&&p.horasConsumidas/p.horasOferta>1).length;
+  const activos        = people.filter(p=>p.status==="Activo"||p.status==="Activa"||p.status==="Remota").length;
+
+  // How many projects active today
+  const activosHoy = projects.filter(p=>parseD(p.inicio)<=TODAY&&parseD(p.fin)>=TODAY).length;
+
+  const S = {
+    app:   {fontFamily:"'DM Sans',sans-serif",background:"#0f172a",minHeight:"100vh",color:"#e2e8f0"},
+    hdr:   {background:"#1e293b",borderBottom:"1px solid #1e3a5f",padding:"14px 24px",
+            display:"flex",alignItems:"center",justifyContent:"space-between",
+            position:"sticky",top:0,zIndex:50},
+    body:  {padding:"20px 24px",maxWidth:1400,margin:"0 auto"},
+    card:  (sel)=>({background:"#1e293b",border:`1px solid ${sel?"#3b82f6":"#1e3a5f"}`,
+            borderRadius:12,overflow:"hidden",marginBottom:10,cursor:"pointer"}),
+    det:   {background:"#162032",border:"1px solid #1e3a5f",borderRadius:14,padding:22,marginBottom:16},
+    kpi:   {background:"#1e293b",border:"1px solid #1e3a5f",borderRadius:12,padding:"14px 16px"},
+    tabs:  {display:"flex",gap:4,background:"#0f172a",borderRadius:10,padding:4},
+    tab:   (a)=>({padding:"7px 18px",borderRadius:7,fontSize:13,fontWeight:600,cursor:"pointer",
+                  border:"none",transition:"all .15s",
+                  background:a?"#3b82f6":"transparent",color:a?"#fff":"#64748b"}),
+    srch:  {background:"#1e293b",border:"1px solid #334155",borderRadius:10,
+            padding:"10px 16px",color:"#e2e8f0",fontSize:13,width:"100%",
+            marginBottom:18,outline:"none"},
+    btn:   (v)=>{
+      const b={border:"none",borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer"};
+      if(v==="primary") return {...b,background:"#3b82f6",color:"#fff"};
+      if(v==="danger")  return {...b,background:"#ef4444",color:"#fff"};
+      if(v==="ghost")   return {...b,background:"transparent",color:"#64748b",padding:"4px 8px"};
+      if(v==="outline") return {...b,background:"transparent",border:"1px solid #334155",color:"#94a3b8"};
+      return {...b,background:"#334155",color:"#e2e8f0"};
+    },
+    row:   {display:"flex",alignItems:"center",justifyContent:"space-between",
+            padding:"10px 0",borderBottom:"1px solid #0f172a"},
+    inp:   {background:"#0f172a",border:"1px solid #334155",borderRadius:8,
+            padding:"9px 12px",color:"#e2e8f0",fontSize:13,width:"100%",outline:"none",marginTop:6},
+    sel:   {background:"#0f172a",border:"1px solid #334155",borderRadius:8,
+            padding:"9px 12px",color:"#e2e8f0",fontSize:13,width:"100%",outline:"none",marginTop:6},
+    lbl:   {fontSize:11,color:"#64748b",fontWeight:600,textTransform:"uppercase",
+            letterSpacing:"0.5px",marginBottom:3,display:"block"},
+    num:   {background:"#0f172a",border:"1px solid #334155",borderRadius:6,
+            padding:"4px 10px",color:"#e2e8f0",fontSize:13,fontWeight:700,cursor:"pointer"},
+    mover: {position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:100,
+            display:"flex",alignItems:"center",justifyContent:"center"},
+    mbox:  {background:"#1e293b",border:"1px solid #334155",borderRadius:16,
+            padding:28,width:420,maxWidth:"92vw"},
+  };
+
+  // ─── Project Detail ──────────────────────────────────────────────────────
+  const ProjectDetail = ({proj}) => {
+    const asgns=asgnByProject(proj.id);
+    const rent=rentColor(proj.horasOferta,proj.horasConsumidas);
+    const pct=proj.horasOferta>0?Math.round(proj.horasConsumidas/proj.horasOferta*100):0;
+    const isEditC=editProjKey===proj.id;
+
+    return (
+      <div style={S.det}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
+          <div>
+            <div style={{display:"flex",gap:6,marginBottom:6}}>
+              <Badge bg={`${tipoColor(proj.tipo)}25`} text={tipoColor(proj.tipo)}>{proj.tipo}</Badge>
+              <Badge bg={rent.bg} text={rent.text}>{rent.label}</Badge>
+              <Badge bg={proj.status==="En curso"?"#d1fae5":"#fef3c7"}
+                     text={proj.status==="En curso"?"#065f46":"#92400e"}>{proj.status}</Badge>
+            </div>
+            <div style={{fontSize:20,fontWeight:800,color:"#f1f5f9"}}>{proj.name}</div>
+            <div style={{fontSize:12,color:"#64748b",marginTop:2}}>{proj.client} · {proj.bimId}</div>
+          </div>
+          <div style={{display:"flex",gap:6,alignItems:"center"}}>
+            <button style={S.btn("outline")}
+              onClick={()=>{setDateModal({projectId:proj.id});setDInicio(proj.inicio||"");setDFin(proj.fin||"");setDEntrega(proj.entrega||"");}}>
+              📅 Fechas
+            </button>
+            <button style={S.btn("ghost")} onClick={()=>setSelProject(null)}>✕</button>
+          </div>
+        </div>
+
+        {/* Dates strip */}
+        {proj.inicio && (
+          <div style={{display:"flex",gap:16,marginBottom:14,padding:"10px 14px",
+            background:"#0f172a",borderRadius:8,flexWrap:"wrap"}}>
+            {[
+              {label:"Inicio",   value:fmtD(parseD(proj.inicio)),   color:"#22c55e"},
+              {label:"Fin est.", value:fmtD(parseD(proj.fin)),       color:"#f59e0b"},
+              {label:"Entrega",  value:proj.entrega?fmtD(parseD(proj.entrega)):"—", color:"#f97316"},
+            ].map(({label,value,color})=>(
+              <div key={label}>
+                <div style={{fontSize:10,color:"#475569",textTransform:"uppercase",letterSpacing:"0.5px"}}>{label}</div>
+                <div style={{fontSize:12,fontWeight:700,color}}>{value}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
+          {[{label:"Horas Oferta",value:proj.horasOferta+"h"},{label:"H. Pendientes",value:(proj.horasOferta-proj.horasConsumidas)+"h"}].map(({label,value})=>(
+            <div key={label} style={{background:"#0f172a",borderRadius:8,padding:"10px 14px"}}>
+              <span style={S.lbl}>{label}</span>
+              <div style={{fontSize:22,fontWeight:800,color:"#f1f5f9"}}>{value}</div>
+            </div>
+          ))}
+          <div style={{background:"#0f172a",borderRadius:8,padding:"10px 14px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:2}}>
+              <span style={S.lbl}>H. Consumidas</span>
+              {!isEditC&&<button style={{...S.btn("ghost"),fontSize:10,color:"#3b82f6"}}
+                onClick={()=>{setEditProjKey(proj.id);setEditProjVal(String(proj.horasConsumidas));}}>editar</button>}
+            </div>
+            {isEditC?(
+              <div style={{display:"flex",gap:4,alignItems:"center",marginTop:4}}>
+                <input type="number" value={editProjVal} autoFocus
+                  onChange={e=>setEditProjVal(e.target.value)}
+                  onKeyDown={e=>e.key==="Enter"&&saveEditConsumed()}
+                  style={{...S.inp,marginTop:0,padding:"5px 8px",width:90,textAlign:"center"}}/>
+                <button style={S.btn("primary")} onClick={saveEditConsumed}>✓</button>
+                <button style={S.btn("ghost")} onClick={()=>setEditProjKey(null)}>✕</button>
+              </div>
+            ):(
+              <div style={{fontSize:22,fontWeight:800,color:"#f1f5f9"}}>{proj.horasConsumidas}h</div>
+            )}
+          </div>
+        </div>
+
+        <div style={{marginBottom:16}}>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"#64748b",marginBottom:6}}>
+            <span>CONSUMO SOBRE OFERTA</span>
+            <span style={{fontWeight:700,color:progressColor(pct)}}>{pct}%</span>
+          </div>
+          <Bar pct={pct} width="100%"/>
+        </div>
+
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+          <div style={{fontSize:12,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"0.5px"}}>
+            Equipo — {asgns.length} personas · {asgns.reduce((s,a)=>s+a.horas,0)}h
+          </div>
+          <button style={S.btn("primary")}
+            onClick={()=>{setModal({type:"to-project",projectId:proj.id});setMPersonId("");setMHoras("");}}>
+            + Asignar persona
+          </button>
+        </div>
+
+        {asgns.length===0&&<div style={{color:"#475569",textAlign:"center",padding:16}}>Sin equipo asignado</div>}
+        {asgns.map(a=>{
+          const person=people.find(p=>p.id===a.personId);
+          if(!person) return null;
+          const sc=statusColor(person.status);
+          const key=`${a.personId}|${a.projectId}`;
+          const isEd=editKey===key;
+          return (
+            <div key={a.personId} style={S.row}>
+              <div style={{display:"flex",gap:10,alignItems:"center"}}>
+                <Avatar name={person.name} status={person.status}/>
+                <div>
+                  <div style={{fontSize:13,fontWeight:600,color:"#e2e8f0"}}>{person.name}</div>
+                  <div style={{fontSize:11,color:"#64748b"}}>{person.perfil}</div>
+                </div>
+              </div>
+              <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                <Badge bg={sc.bg} text={sc.text}>{person.status}</Badge>
+                {isEd?(
+                  <div style={{display:"flex",gap:4,alignItems:"center"}}>
+                    <input type="number" value={editVal} autoFocus
+                      onChange={e=>setEditVal(e.target.value)}
+                      onKeyDown={e=>e.key==="Enter"&&saveEditHoras()}
+                      style={{...S.inp,width:75,marginTop:0,padding:"5px 8px",textAlign:"center"}}/>
+                    <button style={S.btn("primary")} onClick={saveEditHoras}>✓</button>
+                    <button style={S.btn("ghost")} onClick={()=>setEditKey(null)}>✕</button>
+                  </div>
+                ):(
+                  <button style={S.num} title="Clic para editar"
+                    onClick={()=>{setEditKey(key);setEditVal(String(a.horas));}}>
+                    {a.horas}h
+                  </button>
+                )}
+                <button style={S.btn("ghost")} onClick={()=>removeAssignment(a.personId,a.projectId)}>
+                  <span style={{color:"#ef4444",fontSize:16}}>×</span>
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // ─── Person Detail ───────────────────────────────────────────────────────
+  const [editRealKey, setEditRealKey] = useState(null);
+  const [editRealVal, setEditRealVal] = useState("");
+
+  const saveEditReal = () => {
+    const h = parseInt(editRealVal);
+    if(isNaN(h)||h<0){setEditRealKey(null);return;}
+    const [perId,prId] = editRealKey.split("|");
+    update({assignments:assignments.map(a=>
+      a.personId===perId&&a.projectId===prId ? {...a,horasReales:h} : a
+    )});
+    setEditRealKey(null);
+    showToast("Horas reales actualizadas ✓");
+  };
+
+  const PersonDetail = ({person}) => {
+    const asgns       = asgnByPerson(person.id);
+    const totalAsig   = asgns.reduce((s,a)=>s+a.horas,0);
+    const totalReales = asgns.reduce((s,a)=>s+(a.horasReales||0),0);
+    const cargaPct    = Math.round(totalAsig/MAX_H*100);
+    const sc          = statusColor(person.status);
+    const maxHoras    = Math.max(...asgns.map(a=>a.horas), 1);
+
+    return (
+      <div style={S.det}>
+
+        {/* Header */}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
+          <div style={{display:"flex",gap:12,alignItems:"center"}}>
+            <Avatar name={person.name} status={person.status} size={48}/>
+            <div>
+              <div style={{fontSize:20,fontWeight:800,color:"#f1f5f9"}}>{person.name}</div>
+              <div style={{fontSize:12,color:"#64748b"}}>{person.perfil} · {person.ubicacion}</div>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:8,alignItems:"center"}}>
+            <select value={person.status} onChange={e=>updatePersonStatus(person.id,e.target.value)}
+              style={{...S.sel,width:"auto",marginTop:0,fontSize:11,padding:"4px 8px"}}>
+              {["Activo","Activa","Remota","Baja médica","Sin asignar"].map(s=><option key={s}>{s}</option>)}
+            </select>
+            <button style={S.btn("ghost")} onClick={()=>setSelPerson(null)}>✕</button>
+          </div>
+        </div>
+
+        {/* KPI cards */}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:16}}>
+          {[
+            {label:"H. asignadas",  value:totalAsig+"h",   accent:null},
+            {label:"H. reales",     value:totalReales+"h", accent:"#3b82f6"},
+            {label:"Pendientes",    value:(totalAsig-totalReales)+"h", accent:totalAsig-totalReales<0?"#ef4444":"#f59e0b"},
+            {label:"Carga",         value:cargaPct+"%",    accent:cargaPct>=100?"#ef4444":cargaPct>=80?"#f59e0b":"#22c55e"},
+          ].map(({label,value,accent})=>(
+            <div key={label} style={{background:"#0f172a",borderRadius:8,padding:"10px 14px"}}>
+              <span style={S.lbl}>{label}</span>
+              <div style={{fontSize:22,fontWeight:800,color:accent||"#f1f5f9"}}>{value}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Global progress */}
+        <div style={{marginBottom:20}}>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"#64748b",marginBottom:6}}>
+            <span>EJECUCIÓN GLOBAL ({totalReales}h reales / {totalAsig}h asignadas)</span>
+            <span style={{fontWeight:700,color:progressColor(Math.round(totalReales/totalAsig*100))}}>
+              {totalAsig>0?Math.round(totalReales/totalAsig*100):0}%
+            </span>
+          </div>
+          {/* Double bar: asignadas en gris, reales encima en azul */}
+          <div style={{background:"#334155",borderRadius:99,height:8,overflow:"hidden",position:"relative"}}>
+            <div style={{
+              position:"absolute",left:0,top:0,bottom:0,
+              width:`${Math.min(totalReales/totalAsig*100,100)}%`,
+              background:"#3b82f6",borderRadius:99,transition:"width .3s"
+            }}/>
+          </div>
+        </div>
+
+        {/* Project rows */}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+          <div style={{fontSize:12,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"0.5px"}}>
+            Horas por proyecto — {asgns.length}
+          </div>
+          <button style={S.btn("primary")}
+            onClick={()=>{setModal({type:"to-person",personId:person.id});setMProjectId("");setMHoras("");}}>
+            + Asignar proyecto
+          </button>
+        </div>
+
+        {asgns.length===0&&(
+          <div style={{color:"#475569",textAlign:"center",padding:16}}>Sin proyectos asignados</div>
+        )}
+
+        {/* Column labels */}
+        {asgns.length>0&&(
+          <div style={{display:"grid",gridTemplateColumns:"1fr 80px 80px 120px 28px",
+            gap:8,paddingBottom:6,marginBottom:4,borderBottom:"1px solid #1e3a5f"}}>
+            <div style={{fontSize:10,color:"#475569",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.4px"}}>Proyecto</div>
+            <div style={{fontSize:10,color:"#475569",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.4px",textAlign:"right"}}>Asignadas</div>
+            <div style={{fontSize:10,color:"#3b82f6",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.4px",textAlign:"right"}}>Reales</div>
+            <div style={{fontSize:10,color:"#475569",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.4px",textAlign:"center"}}>Ejecución</div>
+            <div/>
+          </div>
+        )}
+
+        {asgns.map(a=>{
+          const proj      = projects.find(p=>p.id===a.projectId);
+          if(!proj) return null;
+          const reales    = a.horasReales || 0;
+          const pctEjec   = a.horas > 0 ? Math.round(reales/a.horas*100) : 0;
+          const color     = tipoColor(proj.tipo);
+          const key       = `${a.personId}|${a.projectId}`;
+          const realKey   = `real|${key}`;
+          const isEdAsig  = editKey===key;
+          const isEdReal  = editRealKey===realKey;
+          const ejColor   = pctEjec>=100?"#ef4444":pctEjec>=80?"#f59e0b":"#22c55e";
+
+          return (
+            <div key={a.projectId}
+              style={{display:"grid",gridTemplateColumns:"1fr 80px 80px 120px 28px",
+                gap:8,alignItems:"center",padding:"10px 0",borderBottom:"1px solid #0f172a"}}>
+
+              {/* Project info */}
+              <div>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <div style={{width:8,height:8,borderRadius:2,background:color,flexShrink:0}}/>
+                  <div style={{fontSize:13,fontWeight:600,color:"#e2e8f0",
+                    whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:180}}>
+                    {proj.name}
+                  </div>
+                  <Badge bg={`${color}20`} text={color}>{proj.tipo}</Badge>
+                </div>
+                <div style={{fontSize:10,color:"#475569",marginTop:2,marginLeft:14}}>{proj.client}</div>
+              </div>
+
+              {/* Horas asignadas — editable */}
+              <div style={{textAlign:"right"}}>
+                {isEdAsig ? (
+                  <div style={{display:"flex",gap:2,justifyContent:"flex-end",alignItems:"center"}}>
+                    <input type="number" value={editVal} autoFocus
+                      onChange={e=>setEditVal(e.target.value)}
+                      onKeyDown={e=>e.key==="Enter"&&saveEditHoras()}
+                      style={{...S.inp,width:56,marginTop:0,padding:"3px 6px",textAlign:"center",fontSize:11}}/>
+                    <button style={{...S.btn("primary"),padding:"3px 6px",fontSize:10}} onClick={saveEditHoras}>✓</button>
+                  </div>
+                ):(
+                  <button style={{...S.num,fontSize:12}}
+                    title="Clic para editar horas asignadas"
+                    onClick={()=>{setEditKey(key);setEditVal(String(a.horas));}}>
+                    {a.horas}h
+                  </button>
+                )}
+              </div>
+
+              {/* Horas reales — editable */}
+              <div style={{textAlign:"right"}}>
+                {isEdReal ? (
+                  <div style={{display:"flex",gap:2,justifyContent:"flex-end",alignItems:"center"}}>
+                    <input type="number" value={editRealVal} autoFocus
+                      onChange={e=>setEditRealVal(e.target.value)}
+                      onKeyDown={e=>e.key==="Enter"&&saveEditReal()}
+                      style={{...S.inp,width:56,marginTop:0,padding:"3px 6px",textAlign:"center",fontSize:11}}/>
+                    <button style={{...S.btn("primary"),padding:"3px 6px",fontSize:10}} onClick={saveEditReal}>✓</button>
+                  </div>
+                ):(
+                  <button
+                    title="Clic para editar horas reales"
+                    onClick={()=>{setEditRealKey(realKey);setEditRealVal(String(reales));}}
+                    style={{background:"#0f172a",border:"1px solid #1e3a5f",borderRadius:6,
+                      padding:"4px 10px",color:"#3b82f6",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                    {reales}h
+                  </button>
+                )}
+              </div>
+
+              {/* Mini execution bar */}
+              <div style={{display:"flex",flexDirection:"column",gap:3}}>
+                <div style={{background:"#0f172a",borderRadius:99,height:6,overflow:"hidden",position:"relative"}}>
+                  {/* asignadas: full track */}
+                  <div style={{position:"absolute",inset:0,background:"#334155",borderRadius:99}}/>
+                  {/* reales: fill */}
+                  <div style={{
+                    position:"absolute",left:0,top:0,bottom:0,
+                    width:`${Math.min(pctEjec,100)}%`,
+                    background:ejColor,borderRadius:99,transition:"width .3s"
+                  }}/>
+                  {/* overflow indicator */}
+                  {pctEjec>100&&(
+                    <div style={{position:"absolute",right:0,top:0,bottom:0,width:3,background:"#ef4444",borderRadius:99}}/>
+                  )}
+                </div>
+                <div style={{fontSize:9,fontWeight:700,color:ejColor,textAlign:"center"}}>
+                  {pctEjec}%
+                </div>
+              </div>
+
+              {/* Remove */}
+              <button style={S.btn("ghost")} onClick={()=>removeAssignment(a.personId,a.projectId)}>
+                <span style={{color:"#ef4444",fontSize:14}}>×</span>
+              </button>
+
+            </div>
+          );
+        })}
+
+        {/* Summary footnote */}
+        {asgns.length>0&&(
+          <div style={{marginTop:12,padding:"8px 12px",background:"#0f172a",borderRadius:8,
+            fontSize:11,color:"#475569",display:"flex",gap:16,flexWrap:"wrap"}}>
+            <span>💡 Clic en cualquier número para editar</span>
+            <span style={{color:"#3b82f6"}}>● Horas reales = imputadas hasta hoy</span>
+            <span style={{color:"#64748b"}}>● Horas asignadas = presupuesto por proyecto</span>
+          </div>
+        )}
+
+      </div>
+    );
+  };
+
+  // ─── NEW / EDIT PROJECT ─────────────────────────────────────────────────
+  const EMPTY_PROJ = {name:"",client:"",bimId:"",tipo:"MOD",status:"Inicio",
+    horasOferta:0,horasConsumidas:0,inicio:"",fin:"",entrega:""};
+  const [projFormModal, setProjFormModal] = useState(null); // null | {mode:"new"|"edit", data:{...}}
+
+  const openNewProject = () => setProjFormModal({mode:"new", data:{...EMPTY_PROJ}});
+  const openEditProject = (proj) => setProjFormModal({mode:"edit", data:{...proj}});
+
+  const saveProjForm = () => {
+    const d = projFormModal.data;
+    if(!d.name.trim()||!d.client.trim()) return;
+    if(projFormModal.mode==="new") {
+      const id = "OT_" + d.name.replace(/\s+/g,"_").replace(/[^a-zA-Z0-9_]/g,"").slice(0,20) + "_" + Date.now().toString().slice(-4);
+      update({projects:[...projects,{...d,id,horasOferta:Number(d.horasOferta)||0,horasConsumidas:Number(d.horasConsumidas)||0}]});
+      showToast("Proyecto creado ✓");
+    } else {
+      update({projects:projects.map(p=>p.id===d.id?{...d,horasOferta:Number(d.horasOferta)||0,horasConsumidas:Number(d.horasConsumidas)||0}:p)});
+      setSelProject(prev=>prev&&prev.id===d.id?{...d,horasOferta:Number(d.horasOferta)||0,horasConsumidas:Number(d.horasConsumidas)||0}:prev);
+      showToast("Proyecto actualizado ✓");
+    }
+    setProjFormModal(null);
+  };
+
+  const deleteProject = (id) => {
+    update({
+      projects:projects.filter(p=>p.id!==id),
+      assignments:assignments.filter(a=>a.projectId!==id)
+    });
+    if(selProject?.id===id) setSelProject(null);
+    showToast("Proyecto eliminado");
+  };
+
+  // ─── NEW / EDIT PERSON ──────────────────────────────────────────────────
+  const EMPTY_PERSON = {name:"",perfil:"BIM Modelador",ubicacion:"Madrid",status:"Activo"};
+  const [personFormModal, setPersonFormModal] = useState(null); // null | {mode:"new"|"edit", data:{...}}
+
+  const openNewPerson = () => setPersonFormModal({mode:"new", data:{...EMPTY_PERSON}});
+  const openEditPerson = (person) => setPersonFormModal({mode:"edit", data:{...person}});
+
+  const savePersonForm = () => {
+    const d = personFormModal.data;
+    if(!d.name.trim()) return;
+    if(personFormModal.mode==="new") {
+      const id = "p" + String(Date.now()).slice(-6);
+      update({people:[...people,{...d,id}]});
+      showToast("Persona añadida ✓");
+    } else {
+      update({people:people.map(p=>p.id===d.id?{...d}:p)});
+      setSelPerson(prev=>prev&&prev.id===d.id?{...d}:prev);
+      showToast("Persona actualizada ✓");
+    }
+    setPersonFormModal(null);
+  };
+
+  const deletePerson = (id) => {
+    update({
+      people:people.filter(p=>p.id!==id),
+      assignments:assignments.filter(a=>a.personId!==id)
+    });
+    if(selPerson?.id===id) setSelPerson(null);
+    showToast("Persona eliminada");
+  };
+
+  // shared field helper
+  const Field = ({label,children}) => (
+    <div style={{marginTop:12}}>
+      <label style={S.lbl}>{label}</label>
+      {children}
+    </div>
+  );
+
+  // ─── RENDER ──────────────────────────────────────────────────────────────
+  return (
+    <div style={S.app}>
+
+      {toast&&(
+        <div style={{position:"fixed",bottom:24,right:24,zIndex:200,
+          background:toast.type==="ok"?"#22c55e":"#ef4444",
+          color:"#fff",borderRadius:10,padding:"10px 18px",fontSize:13,fontWeight:600,
+          boxShadow:"0 4px 20px rgba(0,0,0,.4)"}}>
+          {toast.msg}
+        </div>
+      )}
+
+      {/* HEADER */}
+      <div style={S.hdr}>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <div style={{width:36,height:36,borderRadius:8,
+            background:"linear-gradient(135deg,#3b82f6,#0ea5e9)",
+            display:"flex",alignItems:"center",justifyContent:"center",
+            fontWeight:900,fontSize:16,color:"#fff"}}>B</div>
+          <div>
+            <div style={{fontSize:15,fontWeight:700,color:"#f1f5f9",letterSpacing:"-0.3px"}}>CBS BIM Office</div>
+            <div style={{fontSize:10,color:"#64748b",letterSpacing:"0.5px",textTransform:"uppercase"}}>
+              Gestión de proyectos y equipo · 2026
+            </div>
+          </div>
+        </div>
+        <div style={S.tabs}>
+          <button style={S.tab(view==="projects")} onClick={()=>{setView("projects");setSelProject(null);setSearch("");}}>
+            📋 Proyectos
+          </button>
+          <button style={S.tab(view==="people")} onClick={()=>{setView("people");setSelPerson(null);setSearch("");}}>
+            👥 Personas
+          </button>
+          <button style={S.tab(view==="calendar")} onClick={()=>{setView("calendar");setSearch("");}}>
+            📅 Calendario
+          </button>
+        </div>
+      </div>
+
+      <div style={S.body}>
+
+        {/* KPIs */}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:12,marginBottom:22}}>
+          {[
+            {label:"Proyectos activos",  value:projects.length,  sub:`${enRiesgo} en riesgo`,           c:enRiesgo>0?"#ef4444":"#22c55e"},
+            {label:"Activos hoy",        value:activosHoy,       sub:`proyectos en marcha a ${fmtShort(TODAY)}`, c:"#3b82f6"},
+            {label:"Equipo disponible",  value:`${activos}/26`,  sub:"personas activas",                c:"#3b82f6"},
+            {label:"Horas oferta total", value:totalOferta.toLocaleString()+"h", sub:`${totalConsumidas.toLocaleString()}h consumidas`, c:"#f59e0b"},
+            {label:"Avance global",      value:Math.round(totalConsumidas/totalOferta*100)+"%", sub:"horas consumidas / oferta", c:"#22c55e"},
+          ].map(({label,value,sub,c})=>(
+            <div key={label} style={S.kpi}>
+              <div style={{fontSize:10,color:"#64748b",textTransform:"uppercase",letterSpacing:"0.5px",marginBottom:6}}>{label}</div>
+              <div style={{fontSize:22,fontWeight:800,color:"#f1f5f9",letterSpacing:"-0.5px"}}>{value}</div>
+              <div style={{fontSize:11,color:c,marginTop:4}}>{sub}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* CALENDAR VIEW */}
+        {view==="calendar" && <GanttView projects={projects} assignments={assignments}/>}
+
+        {/* PROJECTS VIEW */}
+        {view==="projects" && <>
+          <div style={{display:"flex",gap:10,marginBottom:14,alignItems:"center"}}>
+            <input placeholder="Buscar proyecto, cliente, código OT…"
+              value={search} onChange={e=>setSearch(e.target.value)}
+              style={{...S.srch,marginBottom:0,flex:1}}/>
+            <button style={{...S.btn("primary"),whiteSpace:"nowrap",padding:"10px 18px",fontSize:13}}
+              onClick={openNewProject}>
+              + Nuevo proyecto
+            </button>
+          </div>
+          {selProject&&<ProjectDetail proj={selProject}/>}
+          {filteredProjects.map(proj=>{
+            const asgns=asgnByProject(proj.id);
+            const pct=proj.horasOferta>0?Math.round(proj.horasConsumidas/proj.horasOferta*100):0;
+            const rent=rentColor(proj.horasOferta,proj.horasConsumidas);
+            const sel=selProject?.id===proj.id;
+            return (
+              <div key={proj.id} style={S.card(sel)}>
+                <div style={{padding:"13px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}
+                  onClick={()=>setSelProject(sel?null:proj)}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
+                    <div style={{width:8,height:8,borderRadius:"50%",flexShrink:0,
+                      background:proj.status==="En curso"?"#22c55e":"#f59e0b"}}/>
+                    <div style={{minWidth:0}}>
+                      <div style={{fontSize:13,fontWeight:700,color:"#f1f5f9",
+                        whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{proj.name}</div>
+                      <div style={{fontSize:11,color:"#64748b"}}>{proj.client} · {proj.id}</div>
+                    </div>
+                  </div>
+                  <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
+                    <Badge bg={`${tipoColor(proj.tipo)}25`} text={tipoColor(proj.tipo)}>{proj.tipo}</Badge>
+                    <Badge bg={rent.bg} text={rent.text}>{rent.label}</Badge>
+                    <span style={{fontSize:11,color:"#64748b"}}>{asgns.length}👤</span>
+                    <span style={{fontSize:11,color:"#64748b"}}>{proj.horasConsumidas}/{proj.horasOferta}h</span>
+                    <Bar pct={pct} width={80}/>
+                    <span style={{fontSize:11,color:progressColor(pct),width:34,textAlign:"right",fontWeight:600}}>{pct}%</span>
+                    <button style={{...S.btn("ghost"),padding:"4px 6px",fontSize:11,color:"#94a3b8"}}
+                      onClick={e=>{e.stopPropagation();openEditProject(proj);}}>✏️</button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </>}
+
+        {view==="people" && <>
+          <div style={{display:"flex",gap:10,marginBottom:14,alignItems:"center"}}>
+            <input placeholder="Buscar persona, perfil…"
+              value={search} onChange={e=>setSearch(e.target.value)}
+              style={{...S.srch,marginBottom:0,flex:1}}/>
+            <button style={{...S.btn("primary"),whiteSpace:"nowrap",padding:"10px 18px",fontSize:13}}
+              onClick={openNewPerson}>
+              + Nueva persona
+            </button>
+          </div>
+          {selPerson&&<PersonDetail person={selPerson}/>}
+          {filteredPeople.map(person=>{
+            const asgns     = asgnByPerson(person.id);
+            const totalAsig = asgns.reduce((s,a)=>s+a.horas,0);
+            const totalReal = asgns.reduce((s,a)=>s+(a.horasReales||0),0);
+            const cargaPct  = Math.round(totalAsig/MAX_H*100);
+            const sc        = statusColor(person.status);
+            const sel       = selPerson?.id===person.id;
+            return (
+              <div key={person.id} style={S.card(sel)}>
+                <div style={{padding:"13px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}
+                  onClick={()=>setSelPerson(sel?null:person)}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,flex:1}}>
+                    <Avatar name={person.name} status={person.status}/>
+                    <div>
+                      <div style={{fontSize:13,fontWeight:700,color:"#f1f5f9"}}>{person.name}</div>
+                      <div style={{fontSize:11,color:"#64748b"}}>{person.perfil} · {person.ubicacion}</div>
+                    </div>
+                  </div>
+                  <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
+                    <Badge bg={sc.bg} text={sc.text}>{person.status}</Badge>
+                    <span style={{fontSize:11,color:"#64748b"}}>{asgns.length} proy.</span>
+                    <div style={{textAlign:"right"}}>
+                      <div style={{fontSize:12,fontWeight:700,color:"#e2e8f0"}}>{totalReal}h <span style={{color:"#475569",fontWeight:400}}>/ {totalAsig}h</span></div>
+                      <div style={{fontSize:9,color:"#475569"}}>reales / asig.</div>
+                    </div>
+                    <Bar pct={cargaPct} width={72}/>
+                    <span style={{fontSize:11,fontWeight:600,width:34,textAlign:"right",
+                      color:progressColor(cargaPct)}}>{cargaPct}%</span>
+                    <button style={{...S.btn("ghost"),padding:"4px 6px",fontSize:11,color:"#94a3b8"}}
+                      onClick={e=>{e.stopPropagation();openEditPerson(person);}}>✏️</button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </>}
+
+      </div>
+
+      {/* ASSIGNMENT MODAL */}
+      {modal&&(
+        <div style={S.mover} onClick={e=>e.target===e.currentTarget&&setModal(null)}>
+          <div style={S.mbox}>
+            <div style={{fontSize:16,fontWeight:700,color:"#f1f5f9",marginBottom:4}}>
+              {modal.type==="to-project"?"Asignar persona al proyecto":"Asignar proyecto a la persona"}
+            </div>
+            <div style={{fontSize:12,color:"#64748b",marginBottom:20}}>
+              {modal.type==="to-project"
+                ?projects.find(p=>p.id===modal.projectId)?.name
+                :people.find(p=>p.id===modal.personId)?.name}
+            </div>
+            {modal.type==="to-project"?(
+              <div>
+                <label style={S.lbl}>Persona</label>
+                <select value={mPersonId} onChange={e=>setMPersonId(e.target.value)} style={S.sel}>
+                  <option value="">— Seleccionar —</option>
+                  {people.filter(p=>p.status!=="Baja médica").map(p=>(
+                    <option key={p.id} value={p.id}>{p.name} ({p.perfil})</option>
+                  ))}
+                </select>
+              </div>
+            ):(
+              <div>
+                <label style={S.lbl}>Proyecto</label>
+                <select value={mProjectId} onChange={e=>setMProjectId(e.target.value)} style={S.sel}>
+                  <option value="">— Seleccionar —</option>
+                  {projects.map(p=><option key={p.id} value={p.id}>{p.name} ({p.client})</option>)}
+                </select>
+              </div>
+            )}
+            <div style={{marginTop:14}}>
+              <label style={S.lbl}>Horas asignadas</label>
+              <input type="number" placeholder="ej. 80" value={mHoras}
+                onChange={e=>setMHoras(e.target.value)}
+                onKeyDown={e=>e.key==="Enter"&&addAssignment()} style={S.inp}/>
+            </div>
+            <div style={{display:"flex",gap:8,marginTop:20,justifyContent:"flex-end"}}>
+              <button style={S.btn("default")} onClick={()=>setModal(null)}>Cancelar</button>
+              <button style={S.btn("primary")} onClick={addAssignment}>Guardar asignación</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DATE MODAL */}
+      {dateModal&&(
+        <div style={S.mover} onClick={e=>e.target===e.currentTarget&&setDateModal(null)}>
+          <div style={S.mbox}>
+            <div style={{fontSize:16,fontWeight:700,color:"#f1f5f9",marginBottom:4}}>Editar fechas</div>
+            <div style={{fontSize:12,color:"#64748b",marginBottom:20}}>
+              {projects.find(p=>p.id===dateModal.projectId)?.name}
+            </div>
+            <label style={S.lbl}>Fecha de inicio</label>
+            <input type="date" value={dInicio} onChange={e=>setDInicio(e.target.value)} style={S.inp}/>
+            <div style={{marginTop:14}}>
+              <label style={S.lbl}>Fecha fin estimada</label>
+              <input type="date" value={dFin} onChange={e=>setDFin(e.target.value)} style={S.inp}/>
+            </div>
+            <div style={{marginTop:14}}>
+              <label style={S.lbl}>Fecha de entrega</label>
+              <input type="date" value={dEntrega} onChange={e=>setDEntrega(e.target.value)} style={S.inp}/>
+            </div>
+            <div style={{display:"flex",gap:8,marginTop:20,justifyContent:"flex-end"}}>
+              <button style={S.btn("default")} onClick={()=>setDateModal(null)}>Cancelar</button>
+              <button style={S.btn("primary")} onClick={saveDates}>Guardar fechas</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PROJECT FORM MODAL — new / edit */}
+      {projFormModal&&(
+        <div style={S.mover} onClick={e=>e.target===e.currentTarget&&setProjFormModal(null)}>
+          <div style={{...S.mbox,width:520,maxHeight:"90vh",overflowY:"auto"}}>
+            <div style={{fontSize:17,fontWeight:800,color:"#f1f5f9",marginBottom:2}}>
+              {projFormModal.mode==="new"?"Nuevo proyecto":"Editar proyecto"}
+            </div>
+            <div style={{fontSize:12,color:"#64748b",marginBottom:20}}>
+              {projFormModal.mode==="new"?"Rellena los datos del nuevo proyecto":"Modifica los campos que necesites"}
+            </div>
+
+            {/* 2-col grid for compact layout */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 16px"}}>
+
+              <div style={{gridColumn:"1/-1",marginTop:0}}>
+                <label style={S.lbl}>Nombre del proyecto *</label>
+                <input value={projFormModal.data.name}
+                  onChange={e=>setProjFormModal(m=>({...m,data:{...m.data,name:e.target.value}}))}
+                  placeholder="ej. Dragados Línea 9"
+                  style={S.inp}/>
+              </div>
+
+              <div style={{marginTop:12}}>
+                <label style={S.lbl}>Cliente *</label>
+                <input value={projFormModal.data.client}
+                  onChange={e=>setProjFormModal(m=>({...m,data:{...m.data,client:e.target.value}}))}
+                  placeholder="ej. Dragados"
+                  style={S.inp}/>
+              </div>
+
+              <div style={{marginTop:12}}>
+                <label style={S.lbl}>BIM ID</label>
+                <input value={projFormModal.data.bimId}
+                  onChange={e=>setProjFormModal(m=>({...m,data:{...m.data,bimId:e.target.value}}))}
+                  placeholder="ej. BIM-26000020"
+                  style={S.inp}/>
+              </div>
+
+              <div style={{marginTop:12}}>
+                <label style={S.lbl}>Tipo</label>
+                <select value={projFormModal.data.tipo}
+                  onChange={e=>setProjFormModal(m=>({...m,data:{...m.data,tipo:e.target.value}}))}
+                  style={S.sel}>
+                  {["MOD","COO","BEP","AT","GES"].map(t=><option key={t}>{t}</option>)}
+                </select>
+              </div>
+
+              <div style={{marginTop:12}}>
+                <label style={S.lbl}>Estado</label>
+                <select value={projFormModal.data.status}
+                  onChange={e=>setProjFormModal(m=>({...m,data:{...m.data,status:e.target.value}}))}
+                  style={S.sel}>
+                  {["Inicio","En curso","Pausado","Cerrado"].map(s=><option key={s}>{s}</option>)}
+                </select>
+              </div>
+
+              <div style={{marginTop:12}}>
+                <label style={S.lbl}>Horas oferta</label>
+                <input type="number" value={projFormModal.data.horasOferta}
+                  onChange={e=>setProjFormModal(m=>({...m,data:{...m.data,horasOferta:e.target.value}}))}
+                  placeholder="0" style={S.inp}/>
+              </div>
+
+              <div style={{marginTop:12}}>
+                <label style={S.lbl}>Horas consumidas</label>
+                <input type="number" value={projFormModal.data.horasConsumidas}
+                  onChange={e=>setProjFormModal(m=>({...m,data:{...m.data,horasConsumidas:e.target.value}}))}
+                  placeholder="0" style={S.inp}/>
+              </div>
+
+              <div style={{marginTop:12}}>
+                <label style={S.lbl}>Fecha inicio</label>
+                <input type="date" value={projFormModal.data.inicio||""}
+                  onChange={e=>setProjFormModal(m=>({...m,data:{...m.data,inicio:e.target.value}}))}
+                  style={S.inp}/>
+              </div>
+
+              <div style={{marginTop:12}}>
+                <label style={S.lbl}>Fecha fin estimada</label>
+                <input type="date" value={projFormModal.data.fin||""}
+                  onChange={e=>setProjFormModal(m=>({...m,data:{...m.data,fin:e.target.value}}))}
+                  style={S.inp}/>
+              </div>
+
+              <div style={{marginTop:12,gridColumn:"1/-1"}}>
+                <label style={S.lbl}>Fecha de entrega</label>
+                <input type="date" value={projFormModal.data.entrega||""}
+                  onChange={e=>setProjFormModal(m=>({...m,data:{...m.data,entrega:e.target.value}}))}
+                  style={S.inp}/>
+              </div>
+            </div>
+
+            <div style={{display:"flex",gap:8,marginTop:24,justifyContent:"space-between",alignItems:"center"}}>
+              {projFormModal.mode==="edit"?(
+                <button style={S.btn("danger")}
+                  onClick={()=>{if(confirm("¿Eliminar proyecto y todas sus asignaciones?")){deleteProject(projFormModal.data.id);setProjFormModal(null);}}}>
+                  Eliminar proyecto
+                </button>
+              ):<div/>}
+              <div style={{display:"flex",gap:8}}>
+                <button style={S.btn("default")} onClick={()=>setProjFormModal(null)}>Cancelar</button>
+                <button style={S.btn("primary")} onClick={saveProjForm}>
+                  {projFormModal.mode==="new"?"Crear proyecto":"Guardar cambios"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PERSON FORM MODAL — new / edit */}
+      {personFormModal&&(
+        <div style={S.mover} onClick={e=>e.target===e.currentTarget&&setPersonFormModal(null)}>
+          <div style={{...S.mbox,width:460}}>
+            <div style={{fontSize:17,fontWeight:800,color:"#f1f5f9",marginBottom:2}}>
+              {personFormModal.mode==="new"?"Nueva persona":"Editar persona"}
+            </div>
+            <div style={{fontSize:12,color:"#64748b",marginBottom:20}}>
+              {personFormModal.mode==="new"?"Añade un nuevo miembro al equipo":"Modifica los datos de la persona"}
+            </div>
+
+            <label style={S.lbl}>Nombre completo *</label>
+            <input value={personFormModal.data.name}
+              onChange={e=>setPersonFormModal(m=>({...m,data:{...m.data,name:e.target.value}}))}
+              placeholder="ej. Laura Martínez García"
+              style={S.inp} autoFocus/>
+
+            <div style={{marginTop:12}}>
+              <label style={S.lbl}>Perfil BIM</label>
+              <select value={personFormModal.data.perfil}
+                onChange={e=>setPersonFormModal(m=>({...m,data:{...m.data,perfil:e.target.value}}))}
+                style={S.sel}>
+                {["BIM Modelador","BIM Coord.","BIM Coord. Senior","BIM Manager FR",
+                  "Arquitecta BIM","Arquitecto BIM","Ing. Civil BIM","Ing. Caminos BIM",
+                  "Ing. Civil C3D","CAD/BIM Draftsman","CAD Modelador C3D","Técnico BIM"].map(p=>(
+                  <option key={p}>{p}</option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{marginTop:12}}>
+              <label style={S.lbl}>Ubicación</label>
+              <input value={personFormModal.data.ubicacion}
+                onChange={e=>setPersonFormModal(m=>({...m,data:{...m.data,ubicacion:e.target.value}}))}
+                placeholder="ej. Madrid"
+                style={S.inp}/>
+            </div>
+
+            <div style={{marginTop:12}}>
+              <label style={S.lbl}>Estado</label>
+              <select value={personFormModal.data.status}
+                onChange={e=>setPersonFormModal(m=>({...m,data:{...m.data,status:e.target.value}}))}
+                style={S.sel}>
+                {["Activo","Activa","Remota","Baja médica","Sin asignar"].map(s=><option key={s}>{s}</option>)}
+              </select>
+            </div>
+
+            <div style={{display:"flex",gap:8,marginTop:24,justifyContent:"space-between",alignItems:"center"}}>
+              {personFormModal.mode==="edit"?(
+                <button style={S.btn("danger")}
+                  onClick={()=>{if(confirm("¿Eliminar persona y todas sus asignaciones?")){deletePerson(personFormModal.data.id);setPersonFormModal(null);}}}>
+                  Eliminar persona
+                </button>
+              ):<div/>}
+              <div style={{display:"flex",gap:8}}>
+                <button style={S.btn("default")} onClick={()=>setPersonFormModal(null)}>Cancelar</button>
+                <button style={S.btn("primary")} onClick={savePersonForm}>
+                  {personFormModal.mode==="new"?"Añadir persona":"Guardar cambios"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
