@@ -112,8 +112,29 @@ const ASSIGNMENTS_DEFAULT = [
 ];
 
 const STORAGE_KEY = "cbs_bim_2026_v2";
+const SCOPE_KEY   = "cbs_bim_scope_v2";
 const MAX_H = 160;
 const TODAY = new Date("2026-03-10");
+
+// Default scope data per project: hitos, disciplinas, % manual
+const SCOPE_DEFAULT = {
+  "OT_AZVI_Metro":       { pctManual:60, hitos:[{n:"BEP aprobado",ok:true},{n:"Modelo LOD 200",ok:true},{n:"Modelo LOD 300",ok:false},{n:"Entrega final",ok:false}], disciplinas:[{n:"Arquitectura",ok:true},{n:"Estructura",ok:false}] },
+  "OT_ASCH_Somosaguas":  { pctManual:70, hitos:[{n:"BEP aprobado",ok:true},{n:"LOD 200",ok:true},{n:"LOD 300",ok:true},{n:"Entrega final",ok:false}], disciplinas:[{n:"Arquitectura",ok:true},{n:"Estructura",ok:true},{n:"MEP",ok:false}] },
+  "OT_Edhinor_CND":      { pctManual:65, hitos:[{n:"BEP aprobado",ok:true},{n:"Modelo base",ok:true},{n:"Revisión cliente",ok:false},{n:"Entrega final",ok:false}], disciplinas:[{n:"Civil",ok:true},{n:"Estructura",ok:false}] },
+  "OT_FSDC_M1":          { pctManual:80, hitos:[{n:"BEP aprobado",ok:true},{n:"LOD 300",ok:true},{n:"Coordinación",ok:true},{n:"Entrega",ok:false}], disciplinas:[{n:"Arquitectura",ok:true},{n:"MEP",ok:true},{n:"Estructura",ok:false}] },
+  "OT_GBPA_Ifema":       { pctManual:65, hitos:[{n:"BEP aprobado",ok:true},{n:"LOD 200",ok:true},{n:"Federación",ok:false},{n:"Entrega",ok:false}], disciplinas:[{n:"Arquitectura",ok:true},{n:"Estructura",ok:false},{n:"MEP",ok:false}] },
+  "OT_Negratin_Guayepo": { pctManual:72, hitos:[{n:"BEP aprobado",ok:true},{n:"Modelo base",ok:true},{n:"Revisión",ok:false}], disciplinas:[{n:"Civil",ok:true},{n:"Estructura",ok:false}] },
+  "OT_Dragados_Mesena":  { pctManual:35, hitos:[{n:"BEP aprobado",ok:true},{n:"LOD 200",ok:false},{n:"LOD 300",ok:false}], disciplinas:[{n:"Arquitectura",ok:false},{n:"Estructura",ok:false},{n:"Civil",ok:false}] },
+  "OT_Vamed_Hospital":   { pctManual:25, hitos:[{n:"BEP aprobado",ok:true},{n:"LOD 200",ok:false},{n:"Coordinación",ok:false}], disciplinas:[{n:"Arquitectura",ok:false},{n:"MEP",ok:false}] },
+  "OT_FR_SNCF_LigneRER": { pctManual:40, hitos:[{n:"BEP aprobado",ok:true},{n:"Modelo base",ok:false},{n:"Revisión SNCF",ok:false}], disciplinas:[{n:"Civil",ok:false},{n:"Estructura",ok:false}] },
+  "OT_AMBR_Zamudio":     { pctManual:78, hitos:[{n:"BEP aprobado",ok:true},{n:"LOD 300",ok:true},{n:"Coordinación",ok:true},{n:"Entrega",ok:false}], disciplinas:[{n:"Arquitectura",ok:true},{n:"Estructura",ok:true},{n:"MEP",ok:false}] },
+  "OT_DRAGADOS_HUESNA":  { pctManual:10, hitos:[{n:"BEP aprobado",ok:false},{n:"LOD 200",ok:false}], disciplinas:[{n:"Civil",ok:false},{n:"Estructura",ok:false}] },
+  "OT_FR_POTENCES":      { pctManual:8,  hitos:[{n:"BEP aprobado",ok:false},{n:"Modelo base",ok:false}], disciplinas:[{n:"Civil",ok:false}] },
+  "OT_CALAF":            { pctManual:50, hitos:[{n:"Inicio",ok:true},{n:"Revisión interna",ok:true},{n:"Entrega",ok:false}], disciplinas:[{n:"Arquitectura",ok:true}] },
+  "OT_WEBBER_P6B":       { pctManual:75, hitos:[{n:"BEP aprobado",ok:true},{n:"LOD 300",ok:true},{n:"Coordinación",ok:false},{n:"Entrega",ok:false}], disciplinas:[{n:"Civil",ok:true},{n:"Estructura",ok:false}] },
+  "CO_SACYR":            { pctManual:55, hitos:[{n:"Arranque",ok:true},{n:"Revisión 1",ok:true},{n:"Entrega",ok:false}], disciplinas:[{n:"Coordinación",ok:true}] },
+  "OT_OSÉS_BIM":         { pctManual:5,  hitos:[{n:"BEP aprobado",ok:false},{n:"Modelo base",ok:false}], disciplinas:[{n:"Arquitectura",ok:false}] },
+};
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -486,6 +507,447 @@ function GanttView({ projects, assignments }) {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── REPORT VIEW ──────────────────────────────────────────────────────────────
+
+function ReportView({ projects, people, assignments }) {
+
+  const [scope, setScope] = useState(() => {
+    try { const s = localStorage.getItem(SCOPE_KEY); if(s) return JSON.parse(s); } catch(e){}
+    return SCOPE_DEFAULT;
+  });
+
+  const [editingScope, setEditingScope] = useState(null); // projectId
+  const [newHito,      setNewHito]      = useState("");
+  const [newDisc,      setNewDisc]      = useState("");
+
+  const saveScope = (s) => {
+    setScope(s);
+    try { localStorage.setItem(SCOPE_KEY, JSON.stringify(s)); } catch(e){}
+  };
+
+  const getScope = (id) => scope[id] || { pctManual:0, hitos:[], disciplinas:[] };
+
+  // Compute composite scope advance: 40% manual + 35% hitos + 25% disciplinas
+  const scopeAvance = (id) => {
+    const s = getScope(id);
+    const pM  = s.pctManual || 0;
+    const pHi = s.hitos.length > 0 ? Math.round(s.hitos.filter(h=>h.ok).length / s.hitos.length * 100) : 0;
+    const pDi = s.disciplinas.length > 0 ? Math.round(s.disciplinas.filter(d=>d.ok).length / s.disciplinas.length * 100) : 0;
+    return Math.round(pM * 0.40 + pHi * 0.35 + pDi * 0.25);
+  };
+
+  // Hours advance
+  const horasAvance = (p) => p.horasOferta > 0 ? Math.round(p.horasConsumidas / p.horasOferta * 100) : 0;
+
+  // RAG status: based on scope vs hours divergence + consumption
+  const rag = (proj) => {
+    const hPct = horasAvance(proj);
+    const sPct = scopeAvance(proj.id);
+    const diff = hPct - sPct; // positive = consuming more hours than scope progress
+    if (hPct > 100 || diff > 25) return "R";
+    if (hPct > 85  || diff > 12) return "A";
+    return "G";
+  };
+
+  const ragColor  = r => ({R:"#ef4444", A:"#f59e0b", G:"#22c55e"}[r]);
+  const ragLabel  = r => ({R:"Riesgo", A:"Alerta", G:"OK"}[r]);
+  const ragBg     = r => ({R:"#fee2e2", A:"#fef3c7", G:"#d1fae5"}[r]);
+  const ragText   = r => ({R:"#991b1b", A:"#92400e", G:"#065f46"}[r]);
+
+  const activeProjs  = projects.filter(p => p.status !== "Cerrado");
+  const enRiesgo     = activeProjs.filter(p => rag(p) === "R");
+  const enAlerta     = activeProjs.filter(p => rag(p) === "A");
+  const totalAsig    = assignments.reduce((s,a) => s + a.horas, 0);
+  const activos      = people.filter(p => ["Activo","Activa","Remota"].includes(p.status));
+
+  // People load
+  const loadByPerson = useMemo(() => {
+    const m = {};
+    for(const a of assignments) m[a.personId] = (m[a.personId]||0) + a.horas;
+    return m;
+  }, [assignments]);
+
+  const overloaded = activos.filter(p => (loadByPerson[p.id]||0) / MAX_H > 0.9);
+
+  const printReport = () => window.print();
+
+  const S2 = {
+    section: { marginBottom:28 },
+    sectTitle: { fontSize:11, fontWeight:700, color:"#64748b", textTransform:"uppercase",
+      letterSpacing:"0.6px", marginBottom:14, paddingBottom:8, borderBottom:"1px solid #1e3a5f" },
+    card: { background:"#1e293b", border:"1px solid #1e3a5f", borderRadius:12, padding:"16px 20px" },
+    kpi:  { background:"#1e293b", border:"1px solid #1e3a5f", borderRadius:12, padding:"14px 16px" },
+    thr:  { background:"#0f172a", padding:"8px 12px", fontSize:10, fontWeight:700,
+      color:"#475569", textTransform:"uppercase", letterSpacing:"0.4px" },
+    tdc:  { padding:"10px 12px", fontSize:12, borderBottom:"1px solid #0f172a", verticalAlign:"middle" },
+    inp:  { background:"#0f172a", border:"1px solid #334155", borderRadius:6,
+      padding:"6px 10px", color:"#e2e8f0", fontSize:12, outline:"none" },
+  };
+
+  const editingProj = editingScope ? projects.find(p=>p.id===editingScope) : null;
+  const editS       = editingScope ? getScope(editingScope) : null;
+
+  return (
+    <div>
+      {/* Print styles */}
+      <style>{`
+        @media print {
+          body { background:#fff !important; color:#000 !important; }
+          .no-print { display:none !important; }
+          .print-page { background:#fff !important; color:#000 !important; }
+        }
+      `}</style>
+
+      {/* Header bar */}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24}}>
+        <div>
+          <div style={{fontSize:18,fontWeight:800,color:"#f1f5f9"}}>Informe para Dirección</div>
+          <div style={{fontSize:12,color:"#64748b",marginTop:2}}>
+            CBS BIM Office · Generado {fmtD(TODAY)} · {activeProjs.length} proyectos activos
+          </div>
+        </div>
+        <button className="no-print"
+          onClick={printReport}
+          style={{background:"#3b82f6",border:"none",borderRadius:10,padding:"10px 20px",
+            color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:8}}>
+          🖨️ Imprimir / Guardar PDF
+        </button>
+      </div>
+
+      {/* KPI summary */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:28}}>
+        {[
+          {label:"Proyectos activos",  value:activeProjs.length, sub:"en cartera",          c:"#3b82f6"},
+          {label:"En riesgo 🔴",       value:enRiesgo.length,    sub:"superan umbral RAG",  c:"#ef4444"},
+          {label:"En alerta 🟡",       value:enAlerta.length,    sub:"requieren atención",  c:"#f59e0b"},
+          {label:"Equipo activo",      value:activos.length,     sub:`${overloaded.length} sobrecargados`, c:overloaded.length>0?"#ef4444":"#22c55e"},
+        ].map(({label,value,sub,c})=>(
+          <div key={label} style={S2.kpi}>
+            <div style={{fontSize:10,color:"#64748b",textTransform:"uppercase",letterSpacing:"0.5px",marginBottom:6}}>{label}</div>
+            <div style={{fontSize:26,fontWeight:800,color:"#f1f5f9"}}>{value}</div>
+            <div style={{fontSize:11,color:c,marginTop:4}}>{sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Projects at risk */}
+      {enRiesgo.length > 0 && (
+        <div style={{...S2.section}}>
+          <div style={S2.sectTitle}>⚠️ Proyectos en riesgo — acción inmediata</div>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {enRiesgo.map(proj => {
+              const hPct = horasAvance(proj);
+              const sPct = scopeAvance(proj.id);
+              return (
+                <div key={proj.id} style={{...S2.card, borderLeft:"4px solid #ef4444", display:"flex", alignItems:"center", gap:16, flexWrap:"wrap"}}>
+                  <div style={{width:10,height:10,borderRadius:"50%",background:"#ef4444",flexShrink:0}}/>
+                  <div style={{flex:1,minWidth:160}}>
+                    <div style={{fontSize:14,fontWeight:700,color:"#f1f5f9"}}>{proj.name}</div>
+                    <div style={{fontSize:11,color:"#64748b"}}>{proj.client} · {proj.bimId}</div>
+                  </div>
+                  <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
+                    <div style={{textAlign:"center"}}>
+                      <div style={{fontSize:9,color:"#64748b",textTransform:"uppercase",letterSpacing:"0.4px"}}>Avance horas</div>
+                      <div style={{fontSize:18,fontWeight:800,color:"#ef4444"}}>{hPct}%</div>
+                    </div>
+                    <div style={{textAlign:"center"}}>
+                      <div style={{fontSize:9,color:"#64748b",textTransform:"uppercase",letterSpacing:"0.4px"}}>Avance alcance</div>
+                      <div style={{fontSize:18,fontWeight:800,color:"#f59e0b"}}>{sPct}%</div>
+                    </div>
+                    <div style={{textAlign:"center"}}>
+                      <div style={{fontSize:9,color:"#64748b",textTransform:"uppercase",letterSpacing:"0.4px"}}>Desviación</div>
+                      <div style={{fontSize:18,fontWeight:800,color:"#ef4444"}}>{hPct-sPct>0?"+":""}{hPct-sPct}pts</div>
+                    </div>
+                    {proj.entrega && <div style={{textAlign:"center"}}>
+                      <div style={{fontSize:9,color:"#64748b",textTransform:"uppercase",letterSpacing:"0.4px"}}>Entrega</div>
+                      <div style={{fontSize:12,fontWeight:700,color:"#f97316"}}>{fmtShort(parseD(proj.entrega))}</div>
+                    </div>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Main table */}
+      <div style={S2.section}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+          <div style={S2.sectTitle}>Estado de todos los proyectos</div>
+        </div>
+        <div style={{...S2.card,padding:0,overflow:"hidden"}}>
+          <table style={{width:"100%",borderCollapse:"collapse"}}>
+            <thead>
+              <tr>
+                {["RAG","Proyecto","Cliente","Tipo","Avance Horas","Avance Alcance","Desviación","Equipo","Entrega"].map(h=>(
+                  <th key={h} style={S2.thr}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {activeProjs.map((proj,i) => {
+                const hPct  = horasAvance(proj);
+                const sPct  = scopeAvance(proj.id);
+                const r     = rag(proj);
+                const diff  = hPct - sPct;
+                const nPers = assignments.filter(a=>a.projectId===proj.id).length;
+                return (
+                  <tr key={proj.id} style={{background:i%2===0?"#1e293b":"#162032"}}>
+                    <td style={{...S2.tdc,textAlign:"center"}}>
+                      <span style={{display:"inline-block",width:12,height:12,borderRadius:"50%",background:ragColor(r)}}/>
+                    </td>
+                    <td style={S2.tdc}>
+                      <div style={{fontSize:12,fontWeight:700,color:"#f1f5f9"}}>{proj.name}</div>
+                      <div style={{fontSize:10,color:"#475569"}}>{proj.bimId}</div>
+                    </td>
+                    <td style={{...S2.tdc,color:"#94a3b8"}}>{proj.client}</td>
+                    <td style={S2.tdc}>
+                      <span style={{background:`${tipoColor(proj.tipo)}20`,color:tipoColor(proj.tipo),
+                        fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20}}>{proj.tipo}</span>
+                    </td>
+                    {/* Avance horas */}
+                    <td style={S2.tdc}>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}>
+                        <div style={{background:"#0f172a",borderRadius:99,height:5,width:60,overflow:"hidden"}}>
+                          <div style={{width:`${Math.min(hPct,100)}%`,height:"100%",background:progressColor(hPct),borderRadius:99}}/>
+                        </div>
+                        <span style={{fontSize:11,fontWeight:700,color:progressColor(hPct)}}>{hPct}%</span>
+                      </div>
+                      <div style={{fontSize:9,color:"#475569",marginTop:2}}>{proj.horasConsumidas}/{proj.horasOferta}h</div>
+                    </td>
+                    {/* Avance alcance */}
+                    <td style={S2.tdc}>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}>
+                        <div style={{background:"#0f172a",borderRadius:99,height:5,width:60,overflow:"hidden"}}>
+                          <div style={{width:`${Math.min(sPct,100)}%`,height:"100%",background:"#a78bfa",borderRadius:99}}/>
+                        </div>
+                        <span style={{fontSize:11,fontWeight:700,color:"#a78bfa"}}>{sPct}%</span>
+                      </div>
+                      <div style={{fontSize:9,color:"#475569",marginTop:2}}>
+                        {getScope(proj.id).hitos.filter(h=>h.ok).length}/{getScope(proj.id).hitos.length} hitos
+                        · {getScope(proj.id).disciplinas.filter(d=>d.ok).length}/{getScope(proj.id).disciplinas.length} disc.
+                      </div>
+                    </td>
+                    {/* Desviación */}
+                    <td style={{...S2.tdc,textAlign:"center"}}>
+                      <span style={{fontSize:13,fontWeight:800,
+                        color:Math.abs(diff)<=5?"#64748b":diff>0?"#ef4444":"#22c55e"}}>
+                        {diff>0?"+":""}{diff}pts
+                      </span>
+                    </td>
+                    <td style={{...S2.tdc,textAlign:"center",color:"#94a3b8"}}>{nPers}👤</td>
+                    <td style={{...S2.tdc,color:"#f59e0b",fontSize:11,fontWeight:600}}>
+                      {proj.entrega ? fmtShort(parseD(proj.entrega)) : "—"}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        {/* Legend */}
+        <div style={{display:"flex",gap:16,marginTop:10,flexWrap:"wrap"}}>
+          {[["#ef4444","🔴 Riesgo: horas > 100% o desviación > 25pts"],
+            ["#f59e0b","🟡 Alerta: horas > 85% o desviación > 12pts"],
+            ["#22c55e","🟢 OK: dentro de umbrales"]].map(([c,l])=>(
+            <div key={l} style={{display:"flex",alignItems:"center",gap:5,fontSize:10,color:"#64748b"}}>
+              <div style={{width:8,height:8,borderRadius:"50%",background:c,flexShrink:0}}/>
+              {l}
+            </div>
+          ))}
+          <div style={{fontSize:10,color:"#475569",marginLeft:"auto"}}>
+            Desviación = % avance horas − % avance alcance. Positivo = se consumen más horas de las que avanza el alcance.
+          </div>
+        </div>
+      </div>
+
+      {/* Team load */}
+      <div style={S2.section}>
+        <div style={S2.sectTitle}>Carga del equipo</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:8}}>
+          {activos.map(person => {
+            const h    = loadByPerson[person.id] || 0;
+            const pct  = Math.round(h / MAX_H * 100);
+            const col  = pct>=100?"#ef4444":pct>=85?"#f59e0b":"#22c55e";
+            return (
+              <div key={person.id} style={{...S2.card,padding:"10px 14px"}}>
+                <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:6}}>
+                  <div style={{width:28,height:28,borderRadius:"50%",flexShrink:0,
+                    background:"linear-gradient(135deg,#3b82f6,#8b5cf6)",
+                    display:"flex",alignItems:"center",justifyContent:"center",
+                    fontSize:10,fontWeight:700,color:"#fff"}}>
+                    {initials(person.name)}
+                  </div>
+                  <div style={{minWidth:0}}>
+                    <div style={{fontSize:11,fontWeight:700,color:"#e2e8f0",
+                      whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{person.name}</div>
+                    <div style={{fontSize:9,color:"#64748b"}}>{person.perfil}</div>
+                  </div>
+                </div>
+                <div style={{background:"#0f172a",borderRadius:99,height:5,overflow:"hidden",marginBottom:4}}>
+                  <div style={{width:`${Math.min(pct,100)}%`,height:"100%",background:col,borderRadius:99}}/>
+                </div>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:10}}>
+                  <span style={{color:"#475569"}}>{h}h / {MAX_H}h ref.</span>
+                  <span style={{fontWeight:700,color:col}}>{pct}%</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Scope editor */}
+      <div className="no-print" style={S2.section}>
+        <div style={S2.sectTitle}>Editar avance de alcance por proyecto</div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {activeProjs.map(proj => {
+            const s    = getScope(proj.id);
+            const sPct = scopeAvance(proj.id);
+            const isEd = editingScope === proj.id;
+            return (
+              <div key={proj.id} style={{...S2.card, borderLeft:`3px solid ${isEd?"#3b82f6":"#1e3a5f"}`}}>
+                {/* Collapsed header */}
+                <div style={{display:"flex",alignItems:"center",gap:12,cursor:"pointer"}}
+                  onClick={()=>setEditingScope(isEd?null:proj.id)}>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:13,fontWeight:700,color:"#f1f5f9"}}>{proj.name}</div>
+                    <div style={{fontSize:10,color:"#64748b"}}>{proj.client}</div>
+                  </div>
+                  <div style={{display:"flex",gap:12,alignItems:"center",flexShrink:0}}>
+                    <div style={{textAlign:"center"}}>
+                      <div style={{fontSize:9,color:"#64748b",textTransform:"uppercase"}}>% manual</div>
+                      <div style={{fontSize:14,fontWeight:700,color:"#e2e8f0"}}>{s.pctManual}%</div>
+                    </div>
+                    <div style={{textAlign:"center"}}>
+                      <div style={{fontSize:9,color:"#64748b",textTransform:"uppercase"}}>Hitos</div>
+                      <div style={{fontSize:14,fontWeight:700,color:"#e2e8f0"}}>{s.hitos.filter(h=>h.ok).length}/{s.hitos.length}</div>
+                    </div>
+                    <div style={{textAlign:"center"}}>
+                      <div style={{fontSize:9,color:"#64748b",textTransform:"uppercase"}}>Disciplinas</div>
+                      <div style={{fontSize:14,fontWeight:700,color:"#e2e8f0"}}>{s.disciplinas.filter(d=>d.ok).length}/{s.disciplinas.length}</div>
+                    </div>
+                    <div style={{textAlign:"center"}}>
+                      <div style={{fontSize:9,color:"#a78bfa",textTransform:"uppercase"}}>Alcance</div>
+                      <div style={{fontSize:18,fontWeight:800,color:"#a78bfa"}}>{sPct}%</div>
+                    </div>
+                    <div style={{fontSize:16,color:"#475569",marginLeft:4}}>{isEd?"▲":"▼"}</div>
+                  </div>
+                </div>
+
+                {/* Expanded editor */}
+                {isEd && (
+                  <div style={{marginTop:16,paddingTop:16,borderTop:"1px solid #1e3a5f",
+                    display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:16}}>
+
+                    {/* % manual */}
+                    <div>
+                      <div style={{fontSize:11,fontWeight:700,color:"#94a3b8",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.4px"}}>
+                        % Manual estimado <span style={{color:"#475569",fontWeight:400}}>(40% peso)</span>
+                      </div>
+                      <div style={{display:"flex",alignItems:"center",gap:8}}>
+                        <input type="range" min="0" max="100"
+                          value={s.pctManual}
+                          onChange={e=>{
+                            const ns = {...scope,[proj.id]:{...s,pctManual:parseInt(e.target.value)}};
+                            saveScope(ns);
+                          }}
+                          style={{flex:1,accentColor:"#3b82f6"}}/>
+                        <span style={{fontSize:16,fontWeight:800,color:"#3b82f6",minWidth:40}}>{s.pctManual}%</span>
+                      </div>
+                    </div>
+
+                    {/* Hitos */}
+                    <div>
+                      <div style={{fontSize:11,fontWeight:700,color:"#94a3b8",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.4px"}}>
+                        Hitos <span style={{color:"#475569",fontWeight:400}}>(35% peso)</span>
+                      </div>
+                      <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                        {s.hitos.map((h,i)=>(
+                          <div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
+                            <input type="checkbox" checked={h.ok}
+                              onChange={e=>{
+                                const nh = s.hitos.map((x,j)=>j===i?{...x,ok:e.target.checked}:x);
+                                saveScope({...scope,[proj.id]:{...s,hitos:nh}});
+                              }}
+                              style={{accentColor:"#22c55e",width:14,height:14,cursor:"pointer"}}/>
+                            <span style={{fontSize:12,color:h.ok?"#22c55e":"#94a3b8",flex:1}}>{h.n}</span>
+                            <button onClick={()=>{
+                              const nh=s.hitos.filter((_,j)=>j!==i);
+                              saveScope({...scope,[proj.id]:{...s,hitos:nh}});
+                            }} style={{border:"none",background:"none",color:"#ef4444",cursor:"pointer",fontSize:14,padding:"0 2px"}}>×</button>
+                          </div>
+                        ))}
+                        <div style={{display:"flex",gap:4,marginTop:4}}>
+                          <input value={newHito} onChange={e=>setNewHito(e.target.value)}
+                            onKeyDown={e=>{if(e.key==="Enter"&&newHito.trim()){
+                              saveScope({...scope,[proj.id]:{...s,hitos:[...s.hitos,{n:newHito.trim(),ok:false}]}});
+                              setNewHito("");
+                            }}}
+                            placeholder="+ Añadir hito…"
+                            style={{...S2.inp,flex:1,fontSize:11}}/>
+                          <button onClick={()=>{if(newHito.trim()){
+                            saveScope({...scope,[proj.id]:{...s,hitos:[...s.hitos,{n:newHito.trim(),ok:false}]}});
+                            setNewHito("");
+                          }}} style={{border:"none",borderRadius:6,background:"#3b82f6",color:"#fff",
+                            padding:"6px 10px",cursor:"pointer",fontSize:11,fontWeight:700}}>+</button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Disciplinas */}
+                    <div>
+                      <div style={{fontSize:11,fontWeight:700,color:"#94a3b8",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.4px"}}>
+                        Disciplinas <span style={{color:"#475569",fontWeight:400}}>(25% peso)</span>
+                      </div>
+                      <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                        {s.disciplinas.map((d,i)=>(
+                          <div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
+                            <input type="checkbox" checked={d.ok}
+                              onChange={e=>{
+                                const nd=s.disciplinas.map((x,j)=>j===i?{...x,ok:e.target.checked}:x);
+                                saveScope({...scope,[proj.id]:{...s,disciplinas:nd}});
+                              }}
+                              style={{accentColor:"#22c55e",width:14,height:14,cursor:"pointer"}}/>
+                            <span style={{fontSize:12,color:d.ok?"#22c55e":"#94a3b8",flex:1}}>{d.n}</span>
+                            <button onClick={()=>{
+                              const nd=s.disciplinas.filter((_,j)=>j!==i);
+                              saveScope({...scope,[proj.id]:{...s,disciplinas:nd}});
+                            }} style={{border:"none",background:"none",color:"#ef4444",cursor:"pointer",fontSize:14,padding:"0 2px"}}>×</button>
+                          </div>
+                        ))}
+                        <div style={{display:"flex",gap:4,marginTop:4}}>
+                          <input value={newDisc} onChange={e=>setNewDisc(e.target.value)}
+                            onKeyDown={e=>{if(e.key==="Enter"&&newDisc.trim()){
+                              saveScope({...scope,[proj.id]:{...s,disciplinas:[...s.disciplinas,{n:newDisc.trim(),ok:false}]}});
+                              setNewDisc("");
+                            }}}
+                            placeholder="+ Añadir disciplina…"
+                            style={{...S2.inp,flex:1,fontSize:11}}/>
+                          <button onClick={()=>{if(newDisc.trim()){
+                            saveScope({...scope,[proj.id]:{...s,disciplinas:[...s.disciplinas,{n:newDisc.trim(),ok:false}]}});
+                            setNewDisc("");
+                          }}} style={{border:"none",borderRadius:6,background:"#3b82f6",color:"#fff",
+                            padding:"6px 10px",cursor:"pointer",fontSize:11,fontWeight:700}}>+</button>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <div style={{marginTop:12,fontSize:11,color:"#475569"}}>
+          💡 Los pesos son: 40% estimación manual · 35% hitos completados · 25% disciplinas cerradas
+        </div>
+      </div>
+
     </div>
   );
 }
@@ -1124,6 +1586,9 @@ function App() {
           <button style={S.tab(view==="calendar")} onClick={()=>{setView("calendar");setSearch("");}}>
             📅 Calendario
           </button>
+          <button style={S.tab(view==="report")} onClick={()=>{setView("report");setSearch("");}}>
+            📊 Informe
+          </button>
         </div>
       </div>
 
@@ -1148,6 +1613,9 @@ function App() {
 
         {/* CALENDAR VIEW */}
         {view==="calendar" && <GanttView projects={projects} assignments={assignments}/>}
+
+        {/* REPORT VIEW */}
+        {view==="report" && <ReportView projects={projects} people={people} assignments={assignments}/>}
 
         {/* PROJECTS VIEW */}
         {view==="projects" && <>
