@@ -1468,6 +1468,7 @@ function App() {
   });
 
   const [view,        setView]        = useState("projects");
+  const [calTab,      setCalTab]      = useState("proyectos");
   const [selProject,  setSelProject]  = useState(null);
   const [selPerson,   setSelPerson]   = useState(null);
   const [search,      setSearch]      = useState("");
@@ -1560,13 +1561,20 @@ function App() {
     update({people:people.map(p=>p.id===personId?{...p,status:newStatus}:p)});
   };
 
-  const filteredProjects = projects.filter(p=>
-    p.name.toLowerCase().includes(search.toLowerCase())||
-    p.client.toLowerCase().includes(search.toLowerCase())||
-    p.id.toLowerCase().includes(search.toLowerCase())
-  );
+  const [softwareFilter,    setSoftwareFilter]    = useState("Todos");
+  const [projStatusFilter,  setProjStatusFilter]  = useState("Activos");
 
-  const [softwareFilter, setSoftwareFilter] = useState("Todos");
+  const filteredProjects = projects.filter(p=>{
+    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase())||
+      p.client.toLowerCase().includes(search.toLowerCase())||
+      p.id.toLowerCase().includes(search.toLowerCase());
+    const isClosed = p.status === "Cerrado";
+    const matchStatus =
+      projStatusFilter === "Todos"    ? true :
+      projStatusFilter === "Activos"  ? !isClosed :
+      projStatusFilter === "Cerrados" ? isClosed : true;
+    return matchSearch && matchStatus;
+  });
 
   const filteredPeople = people.filter(p=>{
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase())||
@@ -2174,70 +2182,126 @@ function App() {
         </div>
 
         {/* CALENDAR VIEW */}
-        {view==="calendar" && (()=>{
-          const [calTab, setCalTab] = React.useState("proyectos");
-          return (
-            <div>
-              {/* Sub-tab selector */}
-              <div style={{display:"flex",gap:4,background:"#0f172a",borderRadius:10,padding:4,
-                marginBottom:20,alignSelf:"flex-start",width:"fit-content"}}>
-                {[{id:"proyectos",label:"📅 Proyectos"},{id:"equipo",label:"👤 Equipo"}].map(t=>(
-                  <button key={t.id} onClick={()=>setCalTab(t.id)}
-                    style={{border:"none",borderRadius:7,padding:"8px 20px",fontSize:12,fontWeight:700,
-                      cursor:"pointer",background:calTab===t.id?"#3b82f6":"transparent",
-                      color:calTab===t.id?"#fff":"#64748b",transition:"all .15s"}}>
-                    {t.label}
-                  </button>
-                ))}
-              </div>
-              {calTab==="proyectos"
-                ? <GanttView projects={projects} assignments={assignments}/>
-                : <PeopleGanttView projects={projects} people={people} assignments={assignments}/>
-              }
+        {view==="calendar" && (
+          <div>
+            <div style={{display:"flex",gap:4,background:"#0f172a",borderRadius:10,padding:4,
+              marginBottom:20,width:"fit-content"}}>
+              {[{id:"proyectos",label:"📅 Proyectos"},{id:"equipo",label:"👤 Equipo"}].map(t=>(
+                <button key={t.id} onClick={()=>setCalTab(t.id)}
+                  style={{border:"none",borderRadius:7,padding:"8px 20px",fontSize:12,fontWeight:700,
+                    cursor:"pointer",background:calTab===t.id?"#3b82f6":"transparent",
+                    color:calTab===t.id?"#fff":"#64748b",transition:"all .15s"}}>
+                  {t.label}
+                </button>
+              ))}
             </div>
-          );
-        })()}
+            {calTab==="proyectos"
+              ? <GanttView projects={projects} assignments={assignments}/>
+              : <PeopleGanttView projects={projects} people={people} assignments={assignments}/>
+            }
+          </div>
+        )}
 
         {/* REPORT VIEW */}
         {view==="report" && <ReportView projects={projects} people={people} assignments={assignments}/>}
 
         {/* PROJECTS VIEW */}
         {view==="projects" && <>
-          <div style={{display:"flex",gap:10,marginBottom:14,alignItems:"center"}}>
+          {/* Toolbar */}
+          <div style={{display:"flex",gap:10,marginBottom:14,alignItems:"center",flexWrap:"wrap"}}>
             <input placeholder="Buscar proyecto, cliente, código OT…"
               value={search} onChange={e=>setSearch(e.target.value)}
-              style={{...S.srch,marginBottom:0,flex:1}}/>
-            <button style={{...S.btn("primary"),whiteSpace:"nowrap",padding:"10px 18px",fontSize:13}}
+              style={{...S.srch,marginBottom:0,flex:1,minWidth:180}}/>
+            {/* Status filter */}
+            <div style={{display:"flex",gap:3,background:"#0f172a",borderRadius:8,padding:3,flexShrink:0}}>
+              {[
+                {id:"Activos",  label:"🟢 Activos",  count: projects.filter(p=>p.status!=="Cerrado").length},
+                {id:"Cerrados", label:"⬛ Cerrados", count: projects.filter(p=>p.status==="Cerrado").length},
+                {id:"Todos",    label:"Todos",       count: projects.length},
+              ].map(({id,label,count})=>(
+                <button key={id} onClick={()=>{setProjStatusFilter(id);setSelProject(null);}}
+                  style={{border:"none",borderRadius:6,padding:"6px 13px",fontSize:11,fontWeight:600,
+                    cursor:"pointer",display:"flex",alignItems:"center",gap:5,
+                    background:projStatusFilter===id?"#3b82f6":"transparent",
+                    color:projStatusFilter===id?"#fff":"#64748b"}}>
+                  {label}
+                  <span style={{background:projStatusFilter===id?"rgba(255,255,255,0.25)":"#1e293b",
+                    color:projStatusFilter===id?"#fff":"#94a3b8",
+                    fontSize:9,fontWeight:800,padding:"1px 6px",borderRadius:99,minWidth:18,textAlign:"center"}}>
+                    {count}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <button style={{...S.btn("primary"),whiteSpace:"nowrap",padding:"10px 18px",fontSize:13,flexShrink:0}}
               onClick={openNewProject}>
               + Nuevo proyecto
             </button>
           </div>
+
           {selProject&&<ProjectDetail proj={selProject}/>}
+
+          {filteredProjects.length===0&&(
+            <div style={{textAlign:"center",padding:"40px 16px",color:"#475569",fontSize:13}}>
+              {projStatusFilter==="Cerrados"
+                ? "No hay proyectos cerrados todavía"
+                : "No se encontraron proyectos con ese criterio"}
+            </div>
+          )}
+
           {filteredProjects.map(proj=>{
-            const asgns=asgnByProject(proj.id);
-            const pct=proj.horasOferta>0?Math.round(proj.horasConsumidas/proj.horasOferta*100):0;
-            const rent=rentColor(proj.horasOferta,proj.horasConsumidas);
-            const sel=selProject?.id===proj.id;
+            const asgns   = asgnByProject(proj.id);
+            const pct     = proj.horasOferta>0?Math.round(proj.horasConsumidas/proj.horasOferta*100):0;
+            const rent    = rentColor(proj.horasOferta,proj.horasConsumidas);
+            const sel     = selProject?.id===proj.id;
+            const closed  = proj.status==="Cerrado";
+            const dotColor= closed?"#475569":proj.status==="En curso"?"#22c55e":"#f59e0b";
+            const statusLabel = closed?"Cerrado":proj.status;
             return (
-              <div key={proj.id} style={S.card(sel)}>
+              <div key={proj.id} style={{
+                ...S.card(sel),
+                opacity: closed ? 0.72 : 1,
+                borderLeft: closed ? "3px solid #334155" : sel ? "3px solid #3b82f6" : "3px solid transparent",
+              }}>
                 <div style={{padding:"13px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}
                   onClick={()=>setSelProject(sel?null:proj)}>
                   <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
-                    <div style={{width:8,height:8,borderRadius:"50%",flexShrink:0,
-                      background:proj.status==="En curso"?"#22c55e":"#f59e0b"}}/>
+                    {/* Status dot */}
+                    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,flexShrink:0}}>
+                      <div style={{width:9,height:9,borderRadius:"50%",background:dotColor,
+                        boxShadow:closed?"none":`0 0 6px ${dotColor}80`}}/>
+                    </div>
                     <div style={{minWidth:0}}>
-                      <div style={{fontSize:13,fontWeight:700,color:"#f1f5f9",
-                        whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{proj.name}</div>
+                      <div style={{display:"flex",alignItems:"center",gap:8}}>
+                        <div style={{fontSize:13,fontWeight:700,
+                          color: closed?"#94a3b8":"#f1f5f9",
+                          whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",
+                          textDecoration: closed?"line-through":"none"}}>
+                          {proj.name}
+                        </div>
+                        {closed&&(
+                          <span style={{background:"#33415540",color:"#64748b",fontSize:9,fontWeight:700,
+                            padding:"2px 7px",borderRadius:20,whiteSpace:"nowrap",flexShrink:0}}>
+                            CERRADO
+                          </span>
+                        )}
+                      </div>
                       <div style={{fontSize:11,color:"#64748b"}}>{proj.client} · {proj.id}</div>
                     </div>
                   </div>
                   <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
                     <Badge bg={`${tipoColor(proj.tipo)}25`} text={tipoColor(proj.tipo)}>{proj.tipo}</Badge>
-                    <Badge bg={rent.bg} text={rent.text}>{rent.label}</Badge>
+                    {!closed&&<Badge bg={rent.bg} text={rent.text}>{rent.label}</Badge>}
+                    {closed&&proj.entrega&&(
+                      <span style={{fontSize:10,color:"#64748b"}}>
+                        ✓ {fmtShort(parseD(proj.entrega))}
+                      </span>
+                    )}
                     <span style={{fontSize:11,color:"#64748b"}}>{asgns.length}👤</span>
                     <span style={{fontSize:11,color:"#64748b"}}>{proj.horasConsumidas}/{proj.horasOferta}h</span>
                     <Bar pct={pct} width={80}/>
-                    <span style={{fontSize:11,color:progressColor(pct),width:34,textAlign:"right",fontWeight:600}}>{pct}%</span>
+                    <span style={{fontSize:11,color:closed?"#64748b":progressColor(pct),
+                      width:34,textAlign:"right",fontWeight:600}}>{pct}%</span>
                     <button style={{...S.btn("ghost"),padding:"4px 6px",fontSize:11,color:"#94a3b8"}}
                       onClick={e=>{e.stopPropagation();openEditProject(proj);}}>✏️</button>
                   </div>
