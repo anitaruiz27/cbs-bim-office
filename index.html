@@ -28,51 +28,51 @@ const { useState, useMemo, useRef, useCallback } = React;
 // ─── DATA ─────────────────────────────────────────────────────────────────────
 
 const PROJECTS_DEFAULT = [
-  { id:"OT_AZVI_Metro",       name:"AZVI Metro",          client:"AZVI",     status:"En curso", horasOferta:164,  horasConsumidas:80,  tipo:"COO", bimId:"BIM-24000163", inicio:"2026-01-01", fin:"2026-06-30", entrega:"2026-06-15" },
-  { id:"OT_ASCH_Somosaguas",  name:"ASCH Somosaguas",     client:"ASCH",     status:"En curso", horasOferta:311,  horasConsumidas:200, tipo:"MOD", bimId:"BIM-24000132", inicio:"2025-09-01", fin:"2026-02-28", entrega:"2026-02-20" },
-  { id:"OT_Edhinor_CND",      name:"Edhinor Canal Norte", client:"Edhinor",  status:"En curso", horasOferta:950,  horasConsumidas:600, tipo:"COO", bimId:"BIM-24000068", inicio:"2025-06-01", fin:"2026-04-30", entrega:"2026-04-15" },
-  { id:"OT_FSDC_M1",          name:"FSDC Módulo 1",       client:"FSDC",     status:"En curso", horasOferta:196,  horasConsumidas:160, tipo:"MOD", bimId:"BIM-24000107", inicio:"2025-01-01", fin:"2026-03-31", entrega:"2026-03-20" },
-  { id:"OT_GBPA_Ifema",       name:"GBPA IFEMA",          client:"GBPA",     status:"En curso", horasOferta:466,  horasConsumidas:300, tipo:"MOD", bimId:"BIM-24000158", inicio:"2025-03-01", fin:"2026-05-31", entrega:"2026-05-15" },
-  { id:"OT_Negratin_Guayepo", name:"Negratin-Guayepe",    client:"Ingiopsa", status:"En curso", horasOferta:245,  horasConsumidas:180, tipo:"MOD", bimId:"BIM-24000099", inicio:"2025-04-01", fin:"2026-06-30", entrega:"2026-06-01" },
-  { id:"OT_Dragados_Mesena",  name:"Dragados Mesena",     client:"Dragados", status:"En curso", horasOferta:400,  horasConsumidas:120, tipo:"COO", bimId:"BIM-25000021", inicio:"2025-10-01", fin:"2026-07-31", entrega:"2026-07-15" },
-  { id:"OT_Vamed_Hospital",   name:"VAMED Hospital",      client:"VAMED",    status:"En curso", horasOferta:300,  horasConsumidas:60,  tipo:"MOD", bimId:"BIM-25000067", inicio:"2025-11-01", fin:"2026-08-31", entrega:"2026-08-01" },
-  { id:"OT_FR_SNCF_LigneRER", name:"SNCF Ligne RER P",    client:"SNCF",     status:"En curso", horasOferta:200,  horasConsumidas:80,  tipo:"BEP", bimId:"BIM-25000051", inicio:"2025-09-01", fin:"2026-09-30", entrega:"2026-09-01" },
-  { id:"OT_AMBR_Zamudio",     name:"AMBR Zamudio",        client:"AMBR",     status:"En curso", horasOferta:320,  horasConsumidas:250, tipo:"MOD", bimId:"BIM-25000065", inicio:"2025-07-01", fin:"2026-04-30", entrega:"2026-04-01" },
-  { id:"OT_DRAGADOS_HUESNA",  name:"Dragados Huesna",     client:"Dragados", status:"Inicio",   horasOferta:280,  horasConsumidas:20,  tipo:"MOD", bimId:"BIM-26000015", inicio:"2026-02-01", fin:"2026-12-31", entrega:"2026-12-01" },
-  { id:"OT_FR_POTENCES",      name:"FR Potences",         client:"SNCF",     status:"Inicio",   horasOferta:120,  horasConsumidas:10,  tipo:"MOD", bimId:"BIM-26000004", inicio:"2026-02-15", fin:"2026-06-30", entrega:"2026-06-15" },
-  { id:"OT_CALAF",            name:"CALAF",               client:"CBS Int.", status:"En curso", horasOferta:90,   horasConsumidas:40,  tipo:"AT",  bimId:"BIM-26000008", inicio:"2026-01-01", fin:"2026-03-31", entrega:"2026-03-25" },
-  { id:"OT_WEBBER_P6B",       name:"Webber P6B",          client:"Webber",   status:"En curso", horasOferta:200,  horasConsumidas:150, tipo:"MOD", bimId:"BIM-25000118", inicio:"2025-06-01", fin:"2026-04-30", entrega:"2026-04-15" },
-  { id:"CO_SACYR",            name:"Coordinación Sacyr",  client:"SACYR",    status:"En curso", horasOferta:40,   horasConsumidas:20,  tipo:"AT",  bimId:"BIM-25000079", inicio:"2025-11-01", fin:"2026-06-30", entrega:"2026-06-01" },
-  { id:"OT_OSÉS_BIM",         name:"Osés BIM",            client:"Osés",     status:"Inicio",   horasOferta:160,  horasConsumidas:0,   tipo:"COO", bimId:"BIM-26000018", inicio:"2026-03-01", fin:"2026-12-31", entrega:"2026-11-30" },
+  { id:"OT_AZVI_Metro",       name:"AZVI Metro",          client:"AZVI",     status:"En curso", horasOferta:164,  horasConsumidas:80,  horasOfertaMod:100, horasOfertaCoo:64,  horasConsMod:50,  horasConsCoo:30,  tipo:"COO", bimId:"BIM-24000163", inicio:"2026-01-01", fin:"2026-06-30", entrega:"2026-06-15" },
+  { id:"OT_ASCH_Somosaguas",  name:"ASCH Somosaguas",     client:"ASCH",     status:"En curso", horasOferta:311,  horasConsumidas:200, horasOfertaMod:200, horasOfertaCoo:111, horasConsMod:130, horasConsCoo:70,  tipo:"MOD", bimId:"BIM-24000132", inicio:"2025-09-01", fin:"2026-02-28", entrega:"2026-02-20" },
+  { id:"OT_Edhinor_CND",      name:"Edhinor Canal Norte", client:"Edhinor",  status:"En curso", horasOferta:950,  horasConsumidas:600, horasOfertaMod:600, horasOfertaCoo:350, horasConsMod:380, horasConsCoo:220, tipo:"COO", bimId:"BIM-24000068", inicio:"2025-06-01", fin:"2026-04-30", entrega:"2026-04-15" },
+  { id:"OT_FSDC_M1",          name:"FSDC Módulo 1",       client:"FSDC",     status:"En curso", horasOferta:196,  horasConsumidas:160, horasOfertaMod:140, horasOfertaCoo:56,  horasConsMod:115, horasConsCoo:45,  tipo:"MOD", bimId:"BIM-24000107", inicio:"2025-01-01", fin:"2026-03-31", entrega:"2026-03-20" },
+  { id:"OT_GBPA_Ifema",       name:"GBPA IFEMA",          client:"GBPA",     status:"En curso", horasOferta:466,  horasConsumidas:300, horasOfertaMod:280, horasOfertaCoo:186, horasConsMod:190, horasConsCoo:110, tipo:"MOD", bimId:"BIM-24000158", inicio:"2025-03-01", fin:"2026-05-31", entrega:"2026-05-15" },
+  { id:"OT_Negratin_Guayepo", name:"Negratin-Guayepe",    client:"Ingiopsa", status:"En curso", horasOferta:245,  horasConsumidas:180, horasOfertaMod:160, horasOfertaCoo:85,  horasConsMod:115, horasConsCoo:65,  tipo:"MOD", bimId:"BIM-24000099", inicio:"2025-04-01", fin:"2026-06-30", entrega:"2026-06-01" },
+  { id:"OT_Dragados_Mesena",  name:"Dragados Mesena",     client:"Dragados", status:"En curso", horasOferta:400,  horasConsumidas:120, horasOfertaMod:250, horasOfertaCoo:150, horasConsMod:80,  horasConsCoo:40,  tipo:"COO", bimId:"BIM-25000021", inicio:"2025-10-01", fin:"2026-07-31", entrega:"2026-07-15" },
+  { id:"OT_Vamed_Hospital",   name:"VAMED Hospital",      client:"VAMED",    status:"En curso", horasOferta:300,  horasConsumidas:60,  horasOfertaMod:200, horasOfertaCoo:100, horasConsMod:40,  horasConsCoo:20,  tipo:"MOD", bimId:"BIM-25000067", inicio:"2025-11-01", fin:"2026-08-31", entrega:"2026-08-01" },
+  { id:"OT_FR_SNCF_LigneRER", name:"SNCF Ligne RER P",    client:"SNCF",     status:"En curso", horasOferta:200,  horasConsumidas:80,  horasOfertaMod:130, horasOfertaCoo:70,  horasConsMod:50,  horasConsCoo:30,  tipo:"BEP", bimId:"BIM-25000051", inicio:"2025-09-01", fin:"2026-09-30", entrega:"2026-09-01" },
+  { id:"OT_AMBR_Zamudio",     name:"AMBR Zamudio",        client:"AMBR",     status:"En curso", horasOferta:320,  horasConsumidas:250, horasOfertaMod:200, horasOfertaCoo:120, horasConsMod:160, horasConsCoo:90,  tipo:"MOD", bimId:"BIM-25000065", inicio:"2025-07-01", fin:"2026-04-30", entrega:"2026-04-01" },
+  { id:"OT_DRAGADOS_HUESNA",  name:"Dragados Huesna",     client:"Dragados", status:"Inicio",   horasOferta:280,  horasConsumidas:20,  horasOfertaMod:180, horasOfertaCoo:100, horasConsMod:14,  horasConsCoo:6,   tipo:"MOD", bimId:"BIM-26000015", inicio:"2026-02-01", fin:"2026-12-31", entrega:"2026-12-01" },
+  { id:"OT_FR_POTENCES",      name:"FR Potences",         client:"SNCF",     status:"Inicio",   horasOferta:120,  horasConsumidas:10,  horasOfertaMod:80,  horasOfertaCoo:40,  horasConsMod:7,   horasConsCoo:3,   tipo:"MOD", bimId:"BIM-26000004", inicio:"2026-02-15", fin:"2026-06-30", entrega:"2026-06-15" },
+  { id:"OT_CALAF",            name:"CALAF",               client:"CBS Int.", status:"En curso", horasOferta:90,   horasConsumidas:40,  horasOfertaMod:60,  horasOfertaCoo:30,  horasConsMod:28,  horasConsCoo:12,  tipo:"AT",  bimId:"BIM-26000008", inicio:"2026-01-01", fin:"2026-03-31", entrega:"2026-03-25" },
+  { id:"OT_WEBBER_P6B",       name:"Webber P6B",          client:"Webber",   status:"En curso", horasOferta:200,  horasConsumidas:150, horasOfertaMod:130, horasOfertaCoo:70,  horasConsMod:100, horasConsCoo:50,  tipo:"MOD", bimId:"BIM-25000118", inicio:"2025-06-01", fin:"2026-04-30", entrega:"2026-04-15" },
+  { id:"CO_SACYR",            name:"Coordinación Sacyr",  client:"SACYR",    status:"En curso", horasOferta:40,   horasConsumidas:20,  horasOfertaMod:10,  horasOfertaCoo:30,  horasConsMod:5,   horasConsCoo:15,  tipo:"AT",  bimId:"BIM-25000079", inicio:"2025-11-01", fin:"2026-06-30", entrega:"2026-06-01" },
+  { id:"OT_OSÉS_BIM",         name:"Osés BIM",            client:"Osés",     status:"Inicio",   horasOferta:160,  horasConsumidas:0,   horasOfertaMod:100, horasOfertaCoo:60,  horasConsMod:0,   horasConsCoo:0,   tipo:"COO", bimId:"BIM-26000018", inicio:"2026-03-01", fin:"2026-12-31", entrega:"2026-11-30" },
 ];
 
 const PEOPLE_DEFAULT = [
-  { id:"p01", name:"Arantxa Herrera García",  perfil:"Arquitecta BIM",    ubicacion:"Madrid",      status:"Activa"      },
-  { id:"p02", name:"Isabel Castro",           perfil:"Arquitecta BIM",    ubicacion:"Madrid",      status:"Activa"      },
-  { id:"p03", name:"Natalia Castán",          perfil:"BIM Modelador",     ubicacion:"Sevilla",     status:"Activa"      },
-  { id:"p04", name:"Orestes López",           perfil:"Ing. Civil BIM",    ubicacion:"Madrid",      status:"Activo"      },
-  { id:"p05", name:"Beatriz Pérez",           perfil:"BIM Coord.",        ubicacion:"Madrid",      status:"Baja médica" },
-  { id:"p06", name:"Carmen Liscano",          perfil:"BIM Modelador",     ubicacion:"Madrid",      status:"Activa"      },
-  { id:"p07", name:"Ana María Herrera",       perfil:"BIM Coord. Senior", ubicacion:"Madrid",      status:"Activa"      },
-  { id:"p08", name:"Gema Peluc",              perfil:"BIM Coord.",        ubicacion:"Argentina",   status:"Remota"      },
-  { id:"p09", name:"Andrea de la Cruz",       perfil:"CAD/BIM Draftsman", ubicacion:"Madrid",      status:"Activa"      },
-  { id:"p10", name:"Pablo Díaz Reyes",        perfil:"Ing. Civil BIM",    ubicacion:"Madrid",      status:"Activo"      },
-  { id:"p11", name:"Yanina Gisel Gauna",      perfil:"BIM Modelador",     ubicacion:"Argentina",   status:"Remota"      },
-  { id:"p12", name:"Katherinne Artica",       perfil:"BIM Modelador",     ubicacion:"Fuenlabrada", status:"Activa"      },
-  { id:"p13", name:"Anthony Maradiaga",       perfil:"BIM Modelador STR", ubicacion:"Sevilla",     status:"Activo"      },
-  { id:"p14", name:"Pablo Elias Suárez",      perfil:"BIM Coord.",        ubicacion:"Valencia",    status:"Activo"      },
-  { id:"p15", name:"Diego Rodríguez Uberto",  perfil:"Ing. Civil C3D",    ubicacion:"A Coruña",    status:"Activo"      },
-  { id:"p16", name:"Julián Roa",              perfil:"BIM Modelador",     ubicacion:"Madrid",      status:"Activo"      },
-  { id:"p17", name:"Guillermo Soffi",         perfil:"BIM Modelador",     ubicacion:"Madrid",      status:"Activo"      },
-  { id:"p18", name:"Angélica Sosa",           perfil:"BIM Coord.",        ubicacion:"Madrid",      status:"Activa"      },
-  { id:"p19", name:"Adriano Teruel",          perfil:"Ing. Caminos BIM",  ubicacion:"Madrid",      status:"Activo"      },
-  { id:"p20", name:"Antonio Cordero",         perfil:"BIM Manager FR",    ubicacion:"Madrid",      status:"Activo"      },
-  { id:"p21", name:"Borja Martín",            perfil:"BIM Coord.",        ubicacion:"Madrid",      status:"Activo"      },
-  { id:"p22", name:"Bryan Rayo",              perfil:"BIM Modelador",     ubicacion:"Madrid",      status:"Activo"      },
-  { id:"p23", name:"Virginia Bringas",        perfil:"BIM Coord.",        ubicacion:"Madrid",      status:"Activa"      },
-  { id:"p24", name:"Jesús Corral",            perfil:"BIM Modelador",     ubicacion:"Madrid",      status:"Activo"      },
-  { id:"p25", name:"Mónica Ramírez",          perfil:"BIM Coord.",        ubicacion:"Ciudad Real", status:"Sin asignar" },
-  { id:"p26", name:"Samuel Rivas",            perfil:"CAD Modelador C3D", ubicacion:"Madrid",      status:"Activo"      },
+  { id:"p01", name:"Arantxa Herrera García",  perfil:"Arquitecta BIM",    ubicacion:"Madrid",      status:"Activa",      software:"Revit"    },
+  { id:"p02", name:"Isabel Castro",           perfil:"Arquitecta BIM",    ubicacion:"Madrid",      status:"Activa",      software:"Revit"    },
+  { id:"p03", name:"Natalia Castán",          perfil:"BIM Modelador",     ubicacion:"Sevilla",     status:"Activa",      software:"Revit"    },
+  { id:"p04", name:"Orestes López",           perfil:"Ing. Civil BIM",    ubicacion:"Madrid",      status:"Activo",      software:"Civil 3D" },
+  { id:"p05", name:"Beatriz Pérez",           perfil:"BIM Coord.",        ubicacion:"Madrid",      status:"Baja médica", software:"Revit"    },
+  { id:"p06", name:"Carmen Liscano",          perfil:"BIM Modelador",     ubicacion:"Madrid",      status:"Activa",      software:"Revit"    },
+  { id:"p07", name:"Ana María Herrera",       perfil:"BIM Coord. Senior", ubicacion:"Madrid",      status:"Activa",      software:"Ambos"    },
+  { id:"p08", name:"Gema Peluc",              perfil:"BIM Coord.",        ubicacion:"Argentina",   status:"Remota",      software:"Revit"    },
+  { id:"p09", name:"Andrea de la Cruz",       perfil:"CAD/BIM Draftsman", ubicacion:"Madrid",      status:"Activa",      software:"Revit"    },
+  { id:"p10", name:"Pablo Díaz Reyes",        perfil:"Ing. Civil BIM",    ubicacion:"Madrid",      status:"Activo",      software:"Civil 3D" },
+  { id:"p11", name:"Yanina Gisel Gauna",      perfil:"BIM Modelador",     ubicacion:"Argentina",   status:"Remota",      software:"Revit"    },
+  { id:"p12", name:"Katherinne Artica",       perfil:"BIM Modelador",     ubicacion:"Fuenlabrada", status:"Activa",      software:"Revit"    },
+  { id:"p13", name:"Anthony Maradiaga",       perfil:"BIM Modelador STR", ubicacion:"Sevilla",     status:"Activo",      software:"Revit"    },
+  { id:"p14", name:"Pablo Elias Suárez",      perfil:"BIM Coord.",        ubicacion:"Valencia",    status:"Activo",      software:"Ambos"    },
+  { id:"p15", name:"Diego Rodríguez Uberto",  perfil:"Ing. Civil C3D",    ubicacion:"A Coruña",    status:"Activo",      software:"Civil 3D" },
+  { id:"p16", name:"Julián Roa",              perfil:"BIM Modelador",     ubicacion:"Madrid",      status:"Activo",      software:"Revit"    },
+  { id:"p17", name:"Guillermo Soffi",         perfil:"BIM Modelador",     ubicacion:"Madrid",      status:"Activo",      software:"Revit"    },
+  { id:"p18", name:"Angélica Sosa",           perfil:"BIM Coord.",        ubicacion:"Madrid",      status:"Activa",      software:"Ambos"    },
+  { id:"p19", name:"Adriano Teruel",          perfil:"Ing. Caminos BIM",  ubicacion:"Madrid",      status:"Activo",      software:"Civil 3D" },
+  { id:"p20", name:"Antonio Cordero",         perfil:"BIM Manager FR",    ubicacion:"Madrid",      status:"Activo",      software:"Ambos"    },
+  { id:"p21", name:"Borja Martín",            perfil:"BIM Coord.",        ubicacion:"Madrid",      status:"Activo",      software:"Revit"    },
+  { id:"p22", name:"Bryan Rayo",              perfil:"BIM Modelador",     ubicacion:"Madrid",      status:"Activo",      software:"Revit"    },
+  { id:"p23", name:"Virginia Bringas",        perfil:"BIM Coord.",        ubicacion:"Madrid",      status:"Activa",      software:"Ambos"    },
+  { id:"p24", name:"Jesús Corral",            perfil:"BIM Modelador",     ubicacion:"Madrid",      status:"Activo",      software:"Revit"    },
+  { id:"p25", name:"Mónica Ramírez",          perfil:"BIM Coord.",        ubicacion:"Ciudad Real", status:"Sin asignar", software:"Revit"    },
+  { id:"p26", name:"Samuel Rivas",            perfil:"CAD Modelador C3D", ubicacion:"Madrid",      status:"Activo",      software:"Civil 3D" },
 ];
 
 const ASSIGNMENTS_DEFAULT = [
@@ -1070,10 +1070,16 @@ function App() {
     p.client.toLowerCase().includes(search.toLowerCase())||
     p.id.toLowerCase().includes(search.toLowerCase())
   );
-  const filteredPeople = people.filter(p=>
-    p.name.toLowerCase().includes(search.toLowerCase())||
-    p.perfil.toLowerCase().includes(search.toLowerCase())
-  );
+
+  const [softwareFilter, setSoftwareFilter] = useState("Todos");
+
+  const filteredPeople = people.filter(p=>{
+    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase())||
+      p.perfil.toLowerCase().includes(search.toLowerCase());
+    const matchSw = softwareFilter==="Todos" || p.software===softwareFilter ||
+      (softwareFilter!=="Ambos" && p.software==="Ambos");
+    return matchSearch && matchSw;
+  });
 
   const totalOferta    = projects.reduce((s,p)=>s+p.horasOferta,0);
   const totalConsumidas= projects.reduce((s,p)=>s+p.horasConsumidas,0);
@@ -1170,13 +1176,42 @@ function App() {
           </div>
         )}
 
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+          {/* Modelado */}
+          {[
+            {label:"Modelado", oferta: proj.horasOfertaMod||0, cons: proj.horasConsMod||0, color:"#3b82f6"},
+            {label:"Coordinación", oferta: proj.horasOfertaCoo||0, cons: proj.horasConsCoo||0, color:"#a78bfa"},
+          ].map(({label,oferta,cons,color})=>{
+            const p = oferta>0?Math.round(cons/oferta*100):0;
+            return (
+              <div key={label} style={{background:"#0f172a",borderRadius:8,padding:"12px 14px",border:`1px solid ${color}30`}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                  <span style={{fontSize:10,fontWeight:700,color,textTransform:"uppercase",letterSpacing:"0.5px"}}>{label}</span>
+                  <span style={{fontSize:11,fontWeight:700,color:progressColor(p)}}>{p}%</span>
+                </div>
+                <div style={{display:"flex",gap:8,alignItems:"baseline",marginBottom:6}}>
+                  <span style={{fontSize:20,fontWeight:800,color:"#f1f5f9"}}>{cons}h</span>
+                  <span style={{fontSize:12,color:"#475569"}}>/ {oferta}h oferta</span>
+                </div>
+                <div style={{background:"#1e293b",borderRadius:99,height:5,overflow:"hidden"}}>
+                  <div style={{width:`${Math.min(p,100)}%`,height:"100%",background:color,borderRadius:99,transition:"width .3s"}}/>
+                </div>
+                <div style={{fontSize:10,color:"#475569",marginTop:5}}>Pendientes: {oferta-cons}h</div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Total consumo */}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
-          {[{label:"Horas Oferta",value:proj.horasOferta+"h"},{label:"H. Pendientes",value:(proj.horasOferta-proj.horasConsumidas)+"h"}].map(({label,value})=>(
-            <div key={label} style={{background:"#0f172a",borderRadius:8,padding:"10px 14px"}}>
-              <span style={S.lbl}>{label}</span>
-              <div style={{fontSize:22,fontWeight:800,color:"#f1f5f9"}}>{value}</div>
-            </div>
-          ))}
+          <div style={{background:"#0f172a",borderRadius:8,padding:"10px 14px"}}>
+            <span style={S.lbl}>Total oferta</span>
+            <div style={{fontSize:22,fontWeight:800,color:"#f1f5f9"}}>{proj.horasOferta}h</div>
+          </div>
+          <div style={{background:"#0f172a",borderRadius:8,padding:"10px 14px"}}>
+            <span style={S.lbl}>H. Pendientes</span>
+            <div style={{fontSize:22,fontWeight:800,color:"#f1f5f9"}}>{proj.horasOferta-proj.horasConsumidas}h</div>
+          </div>
           <div style={{background:"#0f172a",borderRadius:8,padding:"10px 14px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:2}}>
               <span style={S.lbl}>H. Consumidas</span>
@@ -1480,7 +1515,8 @@ function App() {
 
   // ─── NEW / EDIT PROJECT ─────────────────────────────────────────────────
   const EMPTY_PROJ = {name:"",client:"",bimId:"",tipo:"MOD",status:"Inicio",
-    horasOferta:0,horasConsumidas:0,inicio:"",fin:"",entrega:""};
+    horasOferta:0,horasConsumidas:0,horasOfertaMod:0,horasOfertaCoo:0,horasConsMod:0,horasConsCoo:0,
+    inicio:"",fin:"",entrega:""};
   const [projFormModal, setProjFormModal] = useState(null); // null | {mode:"new"|"edit", data:{...}}
 
   const openNewProject = () => setProjFormModal({mode:"new", data:{...EMPTY_PROJ}});
@@ -1664,15 +1700,73 @@ function App() {
         </>}
 
         {view==="people" && <>
-          <div style={{display:"flex",gap:10,marginBottom:14,alignItems:"center"}}>
+          {/* Software summary KPIs */}
+          {(()=>{
+            const swGroups = {
+              "Revit":    people.filter(p=>p.software==="Revit"||p.software==="Ambos"),
+              "Civil 3D": people.filter(p=>p.software==="Civil 3D"||p.software==="Ambos"),
+            };
+            const loadByPerson = {};
+            for(const a of assignments) loadByPerson[a.personId]=(loadByPerson[a.personId]||0)+a.horas;
+            return (
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
+                {["Revit","Civil 3D"].map(sw=>{
+                  const swColor = sw==="Revit"?"#3b82f6":"#f59e0b";
+                  const members = swGroups[sw].filter(p=>["Activo","Activa","Remota"].includes(p.status));
+                  const totalH  = members.reduce((s,p)=>(loadByPerson[p.id]||0)+s,0);
+                  const avgLoad = members.length>0?Math.round(totalH/members.length/MAX_H*100):0;
+                  const overloaded = members.filter(p=>(loadByPerson[p.id]||0)/MAX_H>0.9).length;
+                  return (
+                    <div key={sw} style={{background:"#1e293b",border:`1px solid ${swColor}40`,
+                      borderRadius:12,padding:"14px 18px",borderLeft:`4px solid ${swColor}`}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                        <div style={{fontSize:14,fontWeight:800,color:swColor}}>{sw}</div>
+                        <div style={{fontSize:11,color:"#64748b"}}>{members.length} personas activas</div>
+                      </div>
+                      <div style={{display:"flex",gap:16}}>
+                        <div>
+                          <div style={{fontSize:9,color:"#64748b",textTransform:"uppercase",letterSpacing:"0.4px"}}>Carga media</div>
+                          <div style={{fontSize:22,fontWeight:800,color:avgLoad>=85?"#ef4444":avgLoad>=70?"#f59e0b":"#22c55e"}}>{avgLoad}%</div>
+                        </div>
+                        <div>
+                          <div style={{fontSize:9,color:"#64748b",textTransform:"uppercase",letterSpacing:"0.4px"}}>Horas totales</div>
+                          <div style={{fontSize:22,fontWeight:800,color:"#f1f5f9"}}>{totalH}h</div>
+                        </div>
+                        <div>
+                          <div style={{fontSize:9,color:"#64748b",textTransform:"uppercase",letterSpacing:"0.4px"}}>Sobrecargados</div>
+                          <div style={{fontSize:22,fontWeight:800,color:overloaded>0?"#ef4444":"#22c55e"}}>{overloaded}</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+
+          {/* Filters row */}
+          <div style={{display:"flex",gap:10,marginBottom:14,alignItems:"center",flexWrap:"wrap"}}>
             <input placeholder="Buscar persona, perfil…"
               value={search} onChange={e=>setSearch(e.target.value)}
-              style={{...S.srch,marginBottom:0,flex:1}}/>
-            <button style={{...S.btn("primary"),whiteSpace:"nowrap",padding:"10px 18px",fontSize:13}}
+              style={{...S.srch,marginBottom:0,flex:1,minWidth:200}}/>
+            {/* Software filter */}
+            <div style={{display:"flex",gap:3,background:"#0f172a",borderRadius:8,padding:3,flexShrink:0}}>
+              {["Todos","Revit","Civil 3D","Ambos"].map(sw=>(
+                <button key={sw} onClick={()=>setSoftwareFilter(sw)}
+                  style={{border:"none",borderRadius:6,padding:"6px 14px",fontSize:11,fontWeight:600,
+                    cursor:"pointer",whiteSpace:"nowrap",
+                    background:softwareFilter===sw?(sw==="Revit"?"#3b82f6":sw==="Civil 3D"?"#f59e0b":sw==="Ambos"?"#22c55e":"#3b82f6"):"transparent",
+                    color:softwareFilter===sw?"#fff":"#64748b"}}>
+                  {sw}
+                </button>
+              ))}
+            </div>
+            <button style={{...S.btn("primary"),whiteSpace:"nowrap",padding:"10px 18px",fontSize:13,flexShrink:0}}
               onClick={openNewPerson}>
               + Nueva persona
             </button>
           </div>
+
           {selPerson&&<PersonDetail person={selPerson}/>}
           {filteredPeople.map(person=>{
             const asgns     = asgnByPerson(person.id);
@@ -1681,18 +1775,29 @@ function App() {
             const cargaPct  = Math.round(totalAsig/MAX_H*100);
             const sc        = statusColor(person.status);
             const sel       = selPerson?.id===person.id;
+            const swColor   = person.software==="Revit"?"#3b82f6":person.software==="Civil 3D"?"#f59e0b":"#22c55e";
             return (
               <div key={person.id} style={S.card(sel)}>
                 <div style={{padding:"13px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}
                   onClick={()=>setSelPerson(sel?null:person)}>
                   <div style={{display:"flex",alignItems:"center",gap:10,flex:1}}>
-                    <Avatar name={person.name} status={person.status}/>
+                    <div style={{position:"relative"}}>
+                      <Avatar name={person.name} status={person.status}/>
+                      <div style={{position:"absolute",bottom:-2,right:-2,width:12,height:12,
+                        borderRadius:"50%",background:swColor,border:"2px solid #1e293b",
+                        display:"flex",alignItems:"center",justifyContent:"center",
+                        fontSize:6,fontWeight:900,color:"#fff",flexShrink:0}}>
+                        {person.software==="Civil 3D"?"C":person.software==="Ambos"?"A":"R"}
+                      </div>
+                    </div>
                     <div>
                       <div style={{fontSize:13,fontWeight:700,color:"#f1f5f9"}}>{person.name}</div>
                       <div style={{fontSize:11,color:"#64748b"}}>{person.perfil} · {person.ubicacion}</div>
                     </div>
                   </div>
                   <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
+                    <span style={{background:`${swColor}20`,color:swColor,fontSize:10,fontWeight:700,
+                      padding:"2px 8px",borderRadius:20,whiteSpace:"nowrap"}}>{person.software}</span>
                     <Badge bg={sc.bg} text={sc.text}>{person.status}</Badge>
                     <span style={{fontSize:11,color:"#64748b"}}>{asgns.length} proy.</span>
                     <div style={{textAlign:"right"}}>
@@ -1841,17 +1946,37 @@ function App() {
               </div>
 
               <div style={{marginTop:12}}>
-                <label style={S.lbl}>Horas oferta</label>
+                <label style={S.lbl}>Horas oferta totales</label>
                 <input type="number" value={projFormModal.data.horasOferta}
                   onChange={e=>setProjFormModal(m=>({...m,data:{...m.data,horasOferta:e.target.value}}))}
                   placeholder="0" style={S.inp}/>
               </div>
 
               <div style={{marginTop:12}}>
-                <label style={S.lbl}>Horas consumidas</label>
+                <label style={S.lbl}>Horas consumidas totales</label>
                 <input type="number" value={projFormModal.data.horasConsumidas}
                   onChange={e=>setProjFormModal(m=>({...m,data:{...m.data,horasConsumidas:e.target.value}}))}
                   placeholder="0" style={S.inp}/>
+              </div>
+
+              <div style={{marginTop:12,gridColumn:"1/-1",borderTop:"1px solid #1e3a5f",paddingTop:12}}>
+                <div style={{fontSize:11,fontWeight:700,color:"#64748b",textTransform:"uppercase",
+                  letterSpacing:"0.5px",marginBottom:10}}>Desglose por tipo de trabajo</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10}}>
+                  {[
+                    {label:"Oferta Modelado",   key:"horasOfertaMod"},
+                    {label:"Oferta Coordinación",key:"horasOfertaCoo"},
+                    {label:"Cons. Modelado",    key:"horasConsMod"},
+                    {label:"Cons. Coordinación",key:"horasConsCoo"},
+                  ].map(({label,key})=>(
+                    <div key={key}>
+                      <label style={{...S.lbl,fontSize:9}}>{label}</label>
+                      <input type="number" value={projFormModal.data[key]||0}
+                        onChange={e=>setProjFormModal(m=>({...m,data:{...m.data,[key]:e.target.value}}))}
+                        placeholder="0" style={{...S.inp,padding:"6px 10px",fontSize:12}}/>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div style={{marginTop:12}}>
@@ -1930,6 +2055,15 @@ function App() {
                 onChange={e=>setPersonFormModal(m=>({...m,data:{...m.data,ubicacion:e.target.value}}))}
                 placeholder="ej. Madrid"
                 style={S.inp}/>
+            </div>
+
+            <div style={{marginTop:12}}>
+              <label style={S.lbl}>Software principal</label>
+              <select value={personFormModal.data.software||"Revit"}
+                onChange={e=>setPersonFormModal(m=>({...m,data:{...m.data,software:e.target.value}}))}
+                style={S.sel}>
+                {["Revit","Civil 3D","Ambos"].map(s=><option key={s}>{s}</option>)}
+              </select>
             </div>
 
             <div style={{marginTop:12}}>
