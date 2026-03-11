@@ -24,6 +24,7 @@
 <div id="root"></div>
 <script type="text/babel">
 
+
 const { useState, useMemo, useRef, useCallback } = React;
 
 // ─── DATA ─────────────────────────────────────────────────────────────────────
@@ -48,32 +49,32 @@ const PROJECTS_DEFAULT = [
 ];
 
 const PEOPLE_DEFAULT = [
-  { id:"p01", name:"Arantxa Herrera García",  perfil:"Arquitecta BIM",    ubicacion:"Madrid",      status:"Activa",      software:"Revit"    },
-  { id:"p02", name:"Isabel Castro",           perfil:"Arquitecta BIM",    ubicacion:"Madrid",      status:"Activa",      software:"Revit"    },
-  { id:"p03", name:"Natalia Castán",          perfil:"BIM Modelador",     ubicacion:"Sevilla",     status:"Activa",      software:"Revit"    },
-  { id:"p04", name:"Orestes López",           perfil:"Ing. Civil BIM",    ubicacion:"Madrid",      status:"Activo",      software:"Civil 3D" },
-  { id:"p05", name:"Beatriz Pérez",           perfil:"BIM Coord.",        ubicacion:"Madrid",      status:"Baja médica", software:"Revit"    },
-  { id:"p06", name:"Carmen Liscano",          perfil:"BIM Modelador",     ubicacion:"Madrid",      status:"Activa",      software:"Revit"    },
-  { id:"p07", name:"Ana María Herrera",       perfil:"BIM Coord. Senior", ubicacion:"Madrid",      status:"Activa",      software:"Ambos"    },
-  { id:"p08", name:"Gema Peluc",              perfil:"BIM Coord.",        ubicacion:"Argentina",   status:"Remota",      software:"Revit"    },
-  { id:"p09", name:"Andrea de la Cruz",       perfil:"CAD/BIM Draftsman", ubicacion:"Madrid",      status:"Activa",      software:"Revit"    },
-  { id:"p10", name:"Pablo Díaz Reyes",        perfil:"Ing. Civil BIM",    ubicacion:"Madrid",      status:"Activo",      software:"Civil 3D" },
-  { id:"p11", name:"Yanina Gisel Gauna",      perfil:"BIM Modelador",     ubicacion:"Argentina",   status:"Remota",      software:"Revit"    },
-  { id:"p12", name:"Katherinne Artica",       perfil:"BIM Modelador",     ubicacion:"Fuenlabrada", status:"Activa",      software:"Revit"    },
-  { id:"p13", name:"Anthony Maradiaga",       perfil:"BIM Modelador STR", ubicacion:"Sevilla",     status:"Activo",      software:"Revit"    },
-  { id:"p14", name:"Pablo Elias Suárez",      perfil:"BIM Coord.",        ubicacion:"Valencia",    status:"Activo",      software:"Ambos"    },
-  { id:"p15", name:"Diego Rodríguez Uberto",  perfil:"Ing. Civil C3D",    ubicacion:"A Coruña",    status:"Activo",      software:"Civil 3D" },
-  { id:"p16", name:"Julián Roa",              perfil:"BIM Modelador",     ubicacion:"Madrid",      status:"Activo",      software:"Revit"    },
-  { id:"p17", name:"Guillermo Soffi",         perfil:"BIM Modelador",     ubicacion:"Madrid",      status:"Activo",      software:"Revit"    },
-  { id:"p18", name:"Angélica Sosa",           perfil:"BIM Coord.",        ubicacion:"Madrid",      status:"Activa",      software:"Ambos"    },
-  { id:"p19", name:"Adriano Teruel",          perfil:"Ing. Caminos BIM",  ubicacion:"Madrid",      status:"Activo",      software:"Civil 3D" },
-  { id:"p20", name:"Antonio Cordero",         perfil:"BIM Manager FR",    ubicacion:"Madrid",      status:"Activo",      software:"Ambos"    },
-  { id:"p21", name:"Borja Martín",            perfil:"BIM Coord.",        ubicacion:"Madrid",      status:"Activo",      software:"Revit"    },
-  { id:"p22", name:"Bryan Rayo",              perfil:"BIM Modelador",     ubicacion:"Madrid",      status:"Activo",      software:"Revit"    },
-  { id:"p23", name:"Virginia Bringas",        perfil:"BIM Coord.",        ubicacion:"Madrid",      status:"Activa",      software:"Ambos"    },
-  { id:"p24", name:"Jesús Corral",            perfil:"BIM Modelador",     ubicacion:"Madrid",      status:"Activo",      software:"Revit"    },
-  { id:"p25", name:"Mónica Ramírez",          perfil:"BIM Coord.",        ubicacion:"Ciudad Real", status:"Sin asignar", software:"Revit"    },
-  { id:"p26", name:"Samuel Rivas",            perfil:"CAD Modelador C3D", ubicacion:"Madrid",      status:"Activo",      software:"Civil 3D" },
+  { id:"p01", name:"Arantxa Herrera García",  perfil:"Arquitecta BIM",    ubicacion:"Madrid",      status:"Activa",      software:"Revit"    , horasDia:8 },
+  { id:"p02", name:"Isabel Castro",           perfil:"Arquitecta BIM",    ubicacion:"Madrid",      status:"Activa",      software:"Revit"    , horasDia:8 },
+  { id:"p03", name:"Natalia Castán",          perfil:"BIM Modelador",     ubicacion:"Sevilla",     status:"Activa",      software:"Revit"    , horasDia:8 },
+  { id:"p04", name:"Orestes López",           perfil:"Ing. Civil BIM",    ubicacion:"Madrid",      status:"Activo",      software:"Civil 3D" , horasDia:8 },
+  { id:"p05", name:"Beatriz Pérez",           perfil:"BIM Coord.",        ubicacion:"Madrid",      status:"Baja médica", software:"Revit"    , horasDia:8 },
+  { id:"p06", name:"Carmen Liscano",          perfil:"BIM Modelador",     ubicacion:"Madrid",      status:"Activa",      software:"Revit"    , horasDia:8 },
+  { id:"p07", name:"Ana María Herrera",       perfil:"BIM Coord. Senior", ubicacion:"Madrid",      status:"Activa",      software:"Ambos"    , horasDia:8 },
+  { id:"p08", name:"Gema Peluc",              perfil:"BIM Coord.",        ubicacion:"Argentina",   status:"Remota",      software:"Revit"    , horasDia:8 },
+  { id:"p09", name:"Andrea de la Cruz",       perfil:"CAD/BIM Draftsman", ubicacion:"Madrid",      status:"Activa",      software:"Revit"    , horasDia:8 },
+  { id:"p10", name:"Pablo Díaz Reyes",        perfil:"Ing. Civil BIM",    ubicacion:"Madrid",      status:"Activo",      software:"Civil 3D" , horasDia:8 },
+  { id:"p11", name:"Yanina Gisel Gauna",      perfil:"BIM Modelador",     ubicacion:"Argentina",   status:"Remota",      software:"Revit"    , horasDia:8 },
+  { id:"p12", name:"Katherinne Artica",       perfil:"BIM Modelador",     ubicacion:"Fuenlabrada", status:"Activa",      software:"Revit"    , horasDia:8 },
+  { id:"p13", name:"Anthony Maradiaga",       perfil:"BIM Modelador STR", ubicacion:"Sevilla",     status:"Activo",      software:"Revit"    , horasDia:8 },
+  { id:"p14", name:"Pablo Elias Suárez",      perfil:"BIM Coord.",        ubicacion:"Valencia",    status:"Activo",      software:"Ambos"    , horasDia:8 },
+  { id:"p15", name:"Diego Rodríguez Uberto",  perfil:"Ing. Civil C3D",    ubicacion:"A Coruña",    status:"Activo",      software:"Civil 3D" , horasDia:8 },
+  { id:"p16", name:"Julián Roa",              perfil:"BIM Modelador",     ubicacion:"Madrid",      status:"Activo",      software:"Revit"    , horasDia:8 },
+  { id:"p17", name:"Guillermo Soffi",         perfil:"BIM Modelador",     ubicacion:"Madrid",      status:"Activo",      software:"Revit"    , horasDia:8 },
+  { id:"p18", name:"Angélica Sosa",           perfil:"BIM Coord.",        ubicacion:"Madrid",      status:"Activa",      software:"Ambos"    , horasDia:8 },
+  { id:"p19", name:"Adriano Teruel",          perfil:"Ing. Caminos BIM",  ubicacion:"Madrid",      status:"Activo",      software:"Civil 3D" , horasDia:8 },
+  { id:"p20", name:"Antonio Cordero",         perfil:"BIM Manager FR",    ubicacion:"Madrid",      status:"Activo",      software:"Ambos"    , horasDia:8 },
+  { id:"p21", name:"Borja Martín",            perfil:"BIM Coord.",        ubicacion:"Madrid",      status:"Activo",      software:"Revit"    , horasDia:8 },
+  { id:"p22", name:"Bryan Rayo",              perfil:"BIM Modelador",     ubicacion:"Madrid",      status:"Activo",      software:"Revit"    , horasDia:8 },
+  { id:"p23", name:"Virginia Bringas",        perfil:"BIM Coord.",        ubicacion:"Madrid",      status:"Activa",      software:"Ambos"    , horasDia:8 },
+  { id:"p24", name:"Jesús Corral",            perfil:"BIM Modelador",     ubicacion:"Madrid",      status:"Activo",      software:"Revit"    , horasDia:8 },
+  { id:"p25", name:"Mónica Ramírez",          perfil:"BIM Coord.",        ubicacion:"Ciudad Real", status:"Sin asignar", software:"Revit"    , horasDia:8 },
+  { id:"p26", name:"Samuel Rivas",            perfil:"CAD Modelador C3D", ubicacion:"Madrid",      status:"Activo",      software:"Civil 3D" , horasDia:8 },
 ];
 
 const ASSIGNMENTS_DEFAULT = [
@@ -198,7 +199,7 @@ const Avatar = ({name,status,size=34}) => (
 
 // ─── PEOPLE GANTT VIEW ────────────────────────────────────────────────────────
 
-function PeopleGanttView({ projects, people, assignments }) {
+function PeopleGanttView({ projects, people, assignments, absences, onUpdateAbsences }) {
 
   const [ganttYear,    setGanttYear]    = useState(2026);
   const [tooltip,      setTooltip]      = useState(null);
@@ -240,11 +241,15 @@ function PeopleGanttView({ projects, people, assignments }) {
       .filter(a => filterRol === "Todos" || a.rol === filterRol || (!a.rol && filterRol === "Todos"))
       .map(a => {
         const proj = projects.find(p => p.id === a.projectId);
-        if (!proj || !proj.inicio || !proj.fin) return null;
-        const s = parseD(proj.inicio);
-        const e = parseD(proj.fin);
+        if (!proj) return null;
+        // Use assignment-specific dates if available, else fall back to project dates
+        const iniStr = a.fechaIni || proj.inicio;
+        const finStr = a.fechaFin || proj.fin;
+        if (!iniStr || !finStr) return null;
+        const s = parseD(iniStr);
+        const e = parseD(finStr);
         if (s > yearEnd || e < yearStart) return null;
-        return { proj, a, startPct: pctX(proj.inicio), endPct: pctX(proj.fin) };
+        return { proj, a, startPct: pctX(iniStr), endPct: pctX(finStr), iniStr, finStr };
       })
       .filter(Boolean);
   };
@@ -466,6 +471,45 @@ function PeopleGanttView({ projects, people, assignments }) {
                     width:2,background:"#f97316",zIndex:5,opacity:0.9}}/>
                 )}
 
+                {/* Absence bars */}
+                {(absences||[]).filter(ab=>ab.personId===person.id).map((ab,ai)=>{
+                  const abS = pctX(ab.inicio);
+                  const abE = pctX(ab.fin);
+                  const abW = Math.max(abE-abS, 0.005);
+                  const abColor = ab.tipo==="Vacaciones"?"#f59e0b":ab.tipo==="Baja"?"#ef4444":"#a78bfa";
+                  const hasConflict = (absences||[]).filter(ab2=>ab2.personId===person.id).some(ab2=>
+                    assignments.filter(a2=>a2.personId===person.id).some(a2=>{
+                      const proj2=projects.find(p=>p.id===a2.projectId);
+                      if(!proj2||!proj2.inicio||!proj2.fin) return false;
+                      return parseD(proj2.inicio)<=parseD(ab.fin) && parseD(proj2.fin)>=parseD(ab.inicio);
+                    })
+                  );
+                  return (
+                    <div key={"ab"+ai}
+                      title={ab.tipo+" · "+ab.inicio+" → "+ab.fin+(hasConflict?" ⚠ Conflicto con asignación!":"")}
+                      style={{
+                        position:"absolute",
+                        left:abS*100+"%",
+                        width:abW*100+"%",
+                        top:0,bottom:0,
+                        background:abColor+"22",
+                        borderTop:"2px solid "+abColor+"90",
+                        borderBottom:"2px solid "+abColor+"90",
+                        zIndex:hasConflict?8:1,
+                        pointerEvents:"none",
+                      }}>
+                      {abW>0.04&&(
+                        <div style={{position:"absolute",top:2,left:4,fontSize:8,fontWeight:700,color:abColor,whiteSpace:"nowrap",overflow:"hidden"}}>
+                          {hasConflict?"⚠ ":""}{ab.tipo}
+                        </div>
+                      )}
+                      {hasConflict&&(
+                        <div style={{position:"absolute",inset:0,border:"2px solid #ef4444",pointerEvents:"none",zIndex:9}}/>
+                      )}
+                    </div>
+                  );
+                })}
+
                 {/* Render lanes */}
                 {lanes.map((lane, laneIdx) =>
                   lane.map((seg) => {
@@ -482,7 +526,7 @@ function PeopleGanttView({ projects, people, assignments }) {
                         {/* Project bar */}
                         <div
                           className="gantt-bar"
-                          onMouseEnter={e=>setTooltip({person, proj, a, x:e.clientX, y:e.clientY})}
+                          onMouseEnter={e=>setTooltip({person, proj, a, x:e.clientX, y:e.clientY, iniStr:seg.iniStr, finStr:seg.finStr})}
                           onMouseLeave={()=>setTooltip(null)}
                           style={{
                             position:"absolute",
@@ -573,6 +617,14 @@ function PeopleGanttView({ projects, people, assignments }) {
               <span>Hoy ({fmtShort(TODAY)})</span>
             </div>
           )}
+          <div style={{display:"flex",alignItems:"center",gap:6,fontSize:10,color:"#64748b"}}>
+            <div style={{width:20,height:10,background:"#f59e0b22",borderTop:"2px solid #f59e0b90",borderBottom:"2px solid #f59e0b90"}}/>
+            <span>Vacaciones / Ausencia</span>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:6,fontSize:10,color:"#ef4444"}}>
+            <div style={{width:20,height:10,border:"2px solid #ef4444"}}/>
+            <span>⚠ Conflicto con asignación</span>
+          </div>
         </div>
       </div>
 
@@ -606,10 +658,11 @@ function PeopleGanttView({ projects, people, assignments }) {
               <span style={{color:"#e2e8f0"}}>{tooltip.a.horas}h</span>
               {tooltip.a.horasReales!=null&&<><span style={{color:"#64748b"}}>Horas reales</span>
               <span style={{color:"#3b82f6",fontWeight:700}}>{tooltip.a.horasReales}h</span></>}
-              <span style={{color:"#64748b"}}>Inicio proy.</span>
-              <span style={{color:"#e2e8f0"}}>{fmtShort(parseD(tooltip.proj.inicio))}</span>
-              <span style={{color:"#64748b"}}>Fin proy.</span>
-              <span style={{color:"#e2e8f0"}}>{fmtShort(parseD(tooltip.proj.fin))}</span>
+              <span style={{color:"#64748b"}}>Inicio asig.</span>
+              <span style={{color:"#e2e8f0"}}>{tooltip.iniStr?fmtShort(parseD(tooltip.iniStr)):fmtShort(parseD(tooltip.proj.inicio))}</span>
+              <span style={{color:"#64748b"}}>Fin asig.</span>
+              <span style={{color:"#e2e8f0"}}>{tooltip.finStr?fmtShort(parseD(tooltip.finStr)):fmtShort(parseD(tooltip.proj.fin))}</span>
+              {tooltip.a.pct&&<><span style={{color:"#64748b"}}>Dedicación</span><span style={{color:"#22c55e",fontWeight:700}}>{tooltip.a.pct}%</span></>}
               {tooltip.proj.entrega&&<><span style={{color:"#64748b"}}>Entrega</span>
               <span style={{color:"#f59e0b",fontWeight:700}}>{fmtShort(parseD(tooltip.proj.entrega))}</span></>}
             </div>
@@ -868,6 +921,28 @@ function GanttView({ projects, assignments }) {
                     }}/>
                 )}
 
+                {/* hitos diamonds */}
+                {(proj.hitos||[]).filter(h=>h.fecha).map((hito,hi)=>{
+                  const hPct = pctX(hito.fecha);
+                  if(hPct<0||hPct>1) return null;
+                  const hColor = hito.ok?"#22c55e":"#f59e0b";
+                  return (
+                    <div key={hi}
+                      onMouseEnter={e=>setTooltip({proj,x:e.clientX,y:e.clientY,isHito:true,hito})}
+                      onMouseLeave={()=>setTooltip(null)}
+                      style={{
+                        position:"absolute",
+                        left:hPct*100+"%",
+                        top:"50%",transform:"translate(-50%,-50%) rotate(45deg)",
+                        width:8,height:8,
+                        background:hColor,
+                        border:"2px solid #0f172a",
+                        zIndex:7,cursor:"pointer",
+                        boxShadow:"0 0 4px "+hColor+"80",
+                      }}/>
+                  );
+                })}
+
               </div>
             </div>
           );
@@ -891,6 +966,14 @@ function GanttView({ projects, assignments }) {
               <span>Hoy ({fmtShort(TODAY)})</span>
             </div>
           )}
+          <div style={{display:"flex",alignItems:"center",gap:6,fontSize:10,color:"#64748b"}}>
+            <div style={{width:8,height:8,background:"#f59e0b",transform:"rotate(45deg)",flexShrink:0}}/>
+            <span>◆ Hito pendiente</span>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:6,fontSize:10,color:"#64748b"}}>
+            <div style={{width:8,height:8,background:"#22c55e",transform:"rotate(45deg)",flexShrink:0}}/>
+            <span>◆ Hito completado</span>
+          </div>
         </div>
       </div>
 
@@ -905,7 +988,15 @@ function GanttView({ projects, assignments }) {
           <div style={{fontSize:13,fontWeight:700,color:"#f1f5f9",marginBottom:6}}>
             {tooltip.proj.name}
           </div>
-          {tooltip.isEntrega ? (
+          {tooltip.isHito ? (
+            <div>
+              <div style={{fontSize:12,fontWeight:700,color:tooltip.hito.ok?"#22c55e":"#f59e0b",marginBottom:4}}>
+                {tooltip.hito.ok?"✅":"🔶"} {tooltip.hito.n}
+              </div>
+              <div style={{fontSize:11,color:"#94a3b8"}}>{fmtD(parseD(tooltip.hito.fecha))}</div>
+              <div style={{fontSize:10,color:"#64748b",marginTop:4}}>{tooltip.hito.ok?"Completado":"Pendiente"}</div>
+            </div>
+          ) : tooltip.isEntrega ? (
             <div style={{fontSize:11,color:"#f59e0b",fontWeight:600}}>
               🔔 Entrega: {fmtD(parseD(tooltip.proj.entrega))}
             </div>
@@ -1650,6 +1741,27 @@ function ReportView({ projects, people, assignments }) {
 }
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 
+// Helper: count working days (Mon–Fri) between two date strings
+function workingDays(iniStr, finStr) {
+  if(!iniStr || !finStr) return 0;
+  var s = parseD(iniStr), e = parseD(finStr), count = 0;
+  var d = new Date(s);
+  while(d <= e) {
+    var day = d.getDay();
+    if(day !== 0 && day !== 6) count++;
+    d.setDate(d.getDate() + 1);
+  }
+  return count;
+}
+
+// Calculate horas from fechaIni + fechaFin + pct + horasDia
+function calcHoras(fechaIni, fechaFin, pct, horasDia) {
+  var days = workingDays(fechaIni, fechaFin);
+  var hd = horasDia || 8;
+  var p = pct || 100;
+  return Math.round(days * hd * p / 100);
+}
+
 function App() {
 
   const [data, setData] = useState(() => {
@@ -1661,13 +1773,16 @@ function App() {
           ...PROJECTS_DEFAULT[i] ? {inicio:PROJECTS_DEFAULT[i].inicio,fin:PROJECTS_DEFAULT[i].fin,entrega:PROJECTS_DEFAULT[i].entrega} : {},
           ...p
         }));
+        if(!parsed.absences) parsed.absences = [];
+        // migrate people: add horasDia if missing
+        parsed.people = parsed.people.map(p => ({horasDia:8, ...p}));
         return parsed;
       }
     } catch(e) {}
-    return { projects: PROJECTS_DEFAULT, people: PEOPLE_DEFAULT, assignments: ASSIGNMENTS_DEFAULT };
+    return { projects: PROJECTS_DEFAULT, people: PEOPLE_DEFAULT, assignments: ASSIGNMENTS_DEFAULT, absences: [] };
   });
 
-  const { projects, people, assignments } = data;
+  const { projects, people, assignments, absences } = data;
 
   const update = (patch) => {
     setData(prev => {
@@ -1688,6 +1803,10 @@ function App() {
   const [mHoras,           setMHoras]           = useState("");
   const [mRol,             setMRol]             = useState("Modelado");
   const [mSoftware,        setMSoftware]        = useState("Revit");
+  const [mFechaIni,        setMFechaIni]        = useState("");
+  const [mFechaFin,        setMFechaFin]        = useState("");
+  const [mPct,             setMPct]             = useState(100);
+  const [mHorasCalc,       setMHorasCalc]       = useState(0);
   const [editKey,          setEditKey]          = useState(null);
   const [editVal,          setEditVal]          = useState("");
   const [editProjKey,      setEditProjKey]      = useState(null);
@@ -1708,19 +1827,29 @@ function App() {
   const [projFormModal,    setProjFormModal]    = useState(null);
   const [personFormModal,  setPersonFormModal]  = useState(null);
 
-  const showToast = (msg) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 2500);
-  };
+  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
 
   const asgnByProject = (pid) => assignments.filter(a => a.projectId === pid);
   const asgnByPerson  = (pid) => assignments.filter(a => a.personId  === pid);
+
+  const getPersonHorasDia = (personId) => {
+    const p = people.find(x => x.id === personId);
+    return p ? (p.horasDia || 8) : 8;
+  };
 
   const horasByPerson = useMemo(() => {
     const m = {};
     for(const a of assignments) m[a.personId] = (m[a.personId]||0) + a.horas;
     return m;
   }, [assignments]);
+
+  // Recalculate horas when modal date/pct changes
+  const recalcModal = (fechaIni, fechaFin, pct, personId) => {
+    const hd = getPersonHorasDia(personId || (modal && modal.personId) || "");
+    const h = calcHoras(fechaIni, fechaFin, pct, hd);
+    setMHorasCalc(h);
+    if(h > 0) setMHoras(String(h));
+  };
 
   const removeAssignment = (personId, projectId, rol) => {
     update({assignments: assignments.filter(a => {
@@ -1738,11 +1867,14 @@ function App() {
     const prId  = modal.type === "to-project" ? modal.projectId : mProjectId;
     if(!perId || !prId) return;
     const exists = assignments.find(a => a.personId===perId && a.projectId===prId && a.rol===mRol);
+    const entry = {personId:perId, projectId:prId, horas:h, rol:mRol, software:mSoftware,
+      fechaIni:mFechaIni||null, fechaFin:mFechaFin||null, pct:mPct||null};
     const newA = exists
-      ? assignments.map(a => a.personId===perId && a.projectId===prId && a.rol===mRol ? {...a, horas: a.horas+h} : a)
-      : [...assignments, {personId:perId, projectId:prId, horas:h, rol:mRol, software:mSoftware}];
+      ? assignments.map(a => a.personId===perId && a.projectId===prId && a.rol===mRol ? {...a, ...entry} : a)
+      : [...assignments, entry];
     update({assignments: newA});
     setModal(null); setMHoras(""); setMPersonId(""); setMProjectId(""); setMRol("Modelado"); setMSoftware("Revit");
+    setMFechaIni(""); setMFechaFin(""); setMPct(100); setMHorasCalc(0);
     showToast("Asignación guardada ✓");
   };
 
@@ -1791,74 +1923,66 @@ function App() {
     update({people: people.map(p => p.id===personId ? {...p, status:newStatus} : p)});
   };
 
-  const toggleProjSel    = (id) => setSelProjIds(prev   => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
-  const togglePersonSel  = (id) => setSelPersonIds(prev  => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
-  const toggleAllProjs   = ()   => setSelProjIds(prev    => prev.size===filteredProjects.length ? new Set() : new Set(filteredProjects.map(p => p.id)));
-  const toggleAllPeople  = ()   => setSelPersonIds(prev  => prev.size===filteredPeople.length   ? new Set() : new Set(filteredPeople.map(p => p.id)));
+  const toggleProjSel   = (id) => setSelProjIds(prev   => { const s=new Set(prev); s.has(id)?s.delete(id):s.add(id); return s; });
+  const togglePersonSel = (id) => setSelPersonIds(prev  => { const s=new Set(prev); s.has(id)?s.delete(id):s.add(id); return s; });
+  const toggleAllProjs  = ()   => setSelProjIds(prev    => prev.size===filteredProjects.length ? new Set() : new Set(filteredProjects.map(p=>p.id)));
+  const toggleAllPeople = ()   => setSelPersonIds(prev  => prev.size===filteredPeople.length   ? new Set() : new Set(filteredPeople.map(p=>p.id)));
 
   const deleteSelProjects = () => {
-    if(selProjIds.size === 0) return;
-    if(!window.confirm("Eliminar " + selProjIds.size + " proyecto(s)?")) return;
+    if(selProjIds.size===0) return;
+    if(!window.confirm("Eliminar "+selProjIds.size+" proyecto(s)?")) return;
     const ids = selProjIds;
-    update({
-      projects:    projects.filter(p   => !ids.has(p.id)),
-      assignments: assignments.filter(a => !ids.has(a.projectId))
-    });
-    setSelProjIds(new Set());
-    showToast(selProjIds.size + " proyecto(s) eliminados");
+    update({ projects:projects.filter(p=>!ids.has(p.id)), assignments:assignments.filter(a=>!ids.has(a.projectId)) });
+    setSelProjIds(new Set()); showToast(ids.size+" proyecto(s) eliminados");
   };
 
   const deleteSelPeople = () => {
-    if(selPersonIds.size === 0) return;
-    if(!window.confirm("Eliminar " + selPersonIds.size + " persona(s)?")) return;
+    if(selPersonIds.size===0) return;
+    if(!window.confirm("Eliminar "+selPersonIds.size+" persona(s)?")) return;
     const ids = selPersonIds;
-    update({
-      people:      people.filter(p      => !ids.has(p.id)),
-      assignments: assignments.filter(a  => !ids.has(a.personId))
-    });
-    setSelPersonIds(new Set());
-    showToast(selPersonIds.size + " persona(s) eliminadas");
+    update({ people:people.filter(p=>!ids.has(p.id)), assignments:assignments.filter(a=>!ids.has(a.personId)) });
+    setSelPersonIds(new Set()); showToast(ids.size+" persona(s) eliminadas");
   };
 
   const filteredProjects = projects.filter(p => {
     const q = search.toLowerCase();
-    const ok = p.name.toLowerCase().includes(q) || p.client.toLowerCase().includes(q) || p.id.toLowerCase().includes(q);
-    const closed = p.status === "Cerrado";
-    const matchSt = projStatusFilter==="Todos" ? true : projStatusFilter==="Activos" ? !closed : closed;
+    const ok = p.name.toLowerCase().includes(q)||p.client.toLowerCase().includes(q)||p.id.toLowerCase().includes(q);
+    const closed = p.status==="Cerrado";
+    const matchSt = projStatusFilter==="Todos"?true:projStatusFilter==="Activos"?!closed:closed;
     return ok && matchSt;
   });
 
   const filteredPeople = people.filter(p => {
     const q = search.toLowerCase();
-    const ok = p.name.toLowerCase().includes(q) || p.perfil.toLowerCase().includes(q);
-    const sw = softwareFilter==="Todos" || p.software===softwareFilter || (softwareFilter!=="Ambos" && p.software==="Ambos");
+    const ok = p.name.toLowerCase().includes(q)||p.perfil.toLowerCase().includes(q);
+    const sw = softwareFilter==="Todos"||p.software===softwareFilter||(softwareFilter!=="Ambos"&&p.software==="Ambos");
     return ok && sw;
   });
 
-  const totalOferta    = projects.reduce((s,p) => s + p.horasOferta, 0);
-  const totalConsumidas= projects.reduce((s,p) => s + p.horasConsumidas, 0);
-  const enRiesgo       = projects.filter(p => p.horasOferta>0 && p.horasConsumidas/p.horasOferta>1).length;
-  const activos        = people.filter(p => p.status==="Activo"||p.status==="Activa"||p.status==="Remota").length;
-  const activosHoy     = projects.filter(p => p.inicio && p.fin && parseD(p.inicio)<=TODAY && parseD(p.fin)>=TODAY).length;
+  const totalOferta    = projects.reduce((s,p)=>s+p.horasOferta,0);
+  const totalConsumidas= projects.reduce((s,p)=>s+p.horasConsumidas,0);
+  const enRiesgo       = projects.filter(p=>p.horasOferta>0&&p.horasConsumidas/p.horasOferta>1).length;
+  const activos        = people.filter(p=>p.status==="Activo"||p.status==="Activa"||p.status==="Remota").length;
+  const activosHoy     = projects.filter(p=>p.inicio&&p.fin&&parseD(p.inicio)<=TODAY&&parseD(p.fin)>=TODAY).length;
 
-  const EMPTY_PROJ   = {name:"",client:"",bimId:"",tipo:"MOD",status:"Inicio",horasOferta:0,horasConsumidas:0,horasOfertaMod:0,horasOfertaCoo:0,horasConsMod:0,horasConsCoo:0,inicio:"",fin:"",entrega:""};
-  const EMPTY_PERSON = {name:"",perfil:"BIM Modelador",ubicacion:"Madrid",status:"Activo",software:"Revit"};
+  const EMPTY_PROJ   = {name:"",client:"",bimId:"",tipo:"MOD",status:"Inicio",horasOferta:0,horasConsumidas:0,horasOfertaMod:0,horasOfertaCoo:0,horasConsMod:0,horasConsCoo:0,inicio:"",fin:"",entrega:"",hitos:[]};
+  const EMPTY_PERSON = {name:"",perfil:"BIM Modelador",ubicacion:"Madrid",status:"Activo",software:"Revit",horasDia:8};
 
   const openNewProject  = () => setProjFormModal({mode:"new",  data:{...EMPTY_PROJ}});
-  const openEditProject = (p) => setProjFormModal({mode:"edit", data:{...p}});
+  const openEditProject = (p) => setProjFormModal({mode:"edit", data:{...p, hitos:p.hitos||[]}});
   const openNewPerson   = () => setPersonFormModal({mode:"new",  data:{...EMPTY_PERSON}});
   const openEditPerson  = (p) => setPersonFormModal({mode:"edit", data:{...p}});
 
   const saveProjForm = () => {
     const d = projFormModal.data;
-    if(!d.name.trim() || !d.client.trim()) return;
-    if(projFormModal.mode === "new") {
-      const id = "OT_" + d.name.replace(/\s+/g,"_").replace(/[^a-zA-Z0-9_]/g,"").slice(0,20) + "_" + Date.now().toString().slice(-4);
-      update({projects: [...projects, {...d, id, horasOferta:Number(d.horasOferta)||0, horasConsumidas:Number(d.horasConsumidas)||0}]});
+    if(!d.name.trim()||!d.client.trim()) return;
+    if(projFormModal.mode==="new") {
+      const id = "OT_"+d.name.replace(/\s+/g,"_").replace(/[^a-zA-Z0-9_]/g,"").slice(0,20)+"_"+Date.now().toString().slice(-4);
+      update({projects:[...projects,{...d,id,horasOferta:Number(d.horasOferta)||0,horasConsumidas:Number(d.horasConsumidas)||0,hitos:d.hitos||[]}]});
       showToast("Proyecto creado ✓");
     } else {
-      update({projects: projects.map(p => p.id===d.id ? {...d, horasOferta:Number(d.horasOferta)||0, horasConsumidas:Number(d.horasConsumidas)||0} : p)});
-      setSelProject(prev => prev && prev.id===d.id ? {...d} : prev);
+      update({projects:projects.map(p=>p.id===d.id?{...d,horasOferta:Number(d.horasOferta)||0,horasConsumidas:Number(d.horasConsumidas)||0}:p)});
+      setSelProject(prev=>prev&&prev.id===d.id?{...d}:prev);
       showToast("Proyecto actualizado ✓");
     }
     setProjFormModal(null);
@@ -1867,12 +1991,12 @@ function App() {
   const savePersonForm = () => {
     const d = personFormModal.data;
     if(!d.name.trim()) return;
-    if(personFormModal.mode === "new") {
-      update({people: [...people, {...d, id:"p"+String(Date.now()).slice(-6)}]});
+    if(personFormModal.mode==="new") {
+      update({people:[...people,{...d,id:"p"+String(Date.now()).slice(-6)}]});
       showToast("Persona añadida ✓");
     } else {
-      update({people: people.map(p => p.id===d.id ? {...d} : p)});
-      setSelPerson(prev => prev && prev.id===d.id ? {...d} : prev);
+      update({people:people.map(p=>p.id===d.id?{...d}:p)});
+      setSelPerson(prev=>prev&&prev.id===d.id?{...d}:prev);
       showToast("Persona actualizada ✓");
     }
     setPersonFormModal(null);
@@ -1882,19 +2006,19 @@ function App() {
     app:  {fontFamily:"'DM Sans',sans-serif",background:"#0f172a",minHeight:"100vh",color:"#e2e8f0"},
     hdr:  {background:"#1e293b",borderBottom:"1px solid #1e3a5f",padding:"14px 24px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:50},
     body: {padding:"20px 24px",maxWidth:1400,margin:"0 auto"},
-    card: (sel) => ({background:"#1e293b",border:"1px solid "+(sel?"#3b82f6":"#1e3a5f"),borderRadius:12,overflow:"hidden",marginBottom:10,cursor:"pointer"}),
+    card: (sel)=>({background:"#1e293b",border:"1px solid "+(sel?"#3b82f6":"#1e3a5f"),borderRadius:12,overflow:"hidden",marginBottom:10,cursor:"pointer"}),
     det:  {background:"#162032",border:"1px solid #1e3a5f",borderRadius:14,padding:22,marginBottom:16},
     kpi:  {background:"#1e293b",border:"1px solid #1e3a5f",borderRadius:12,padding:"14px 16px"},
     tabs: {display:"flex",gap:4,background:"#0f172a",borderRadius:10,padding:4},
-    tab:  (a) => ({padding:"7px 18px",borderRadius:7,fontSize:13,fontWeight:600,cursor:"pointer",border:"none",transition:"all .15s",background:a?"#3b82f6":"transparent",color:a?"#fff":"#64748b"}),
+    tab:  (a)=>({padding:"7px 18px",borderRadius:7,fontSize:13,fontWeight:600,cursor:"pointer",border:"none",transition:"all .15s",background:a?"#3b82f6":"transparent",color:a?"#fff":"#64748b"}),
     srch: {background:"#1e293b",border:"1px solid #334155",borderRadius:10,padding:"10px 16px",color:"#e2e8f0",fontSize:13,width:"100%",marginBottom:18,outline:"none"},
-    btn:  (v) => {
-      const b = {border:"none",borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer"};
-      if(v==="primary") return {...b, background:"#3b82f6",color:"#fff"};
-      if(v==="danger")  return {...b, background:"#ef4444",color:"#fff"};
-      if(v==="ghost")   return {...b, background:"transparent",color:"#64748b",padding:"4px 8px"};
-      if(v==="outline") return {...b, background:"transparent",border:"1px solid #334155",color:"#94a3b8"};
-      return {...b, background:"#334155",color:"#e2e8f0"};
+    btn:  (v)=>{
+      const b={border:"none",borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer"};
+      if(v==="primary") return {...b,background:"#3b82f6",color:"#fff"};
+      if(v==="danger")  return {...b,background:"#ef4444",color:"#fff"};
+      if(v==="ghost")   return {...b,background:"transparent",color:"#64748b",padding:"4px 8px"};
+      if(v==="outline") return {...b,background:"transparent",border:"1px solid #334155",color:"#94a3b8"};
+      return {...b,background:"#334155",color:"#e2e8f0"};
     },
     row:  {display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid #0f172a"},
     inp:  {background:"#0f172a",border:"1px solid #334155",borderRadius:8,padding:"9px 12px",color:"#e2e8f0",fontSize:13,width:"100%",outline:"none",marginTop:6},
@@ -1902,7 +2026,7 @@ function App() {
     lbl:  {fontSize:11,color:"#64748b",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px",marginBottom:3,display:"block"},
     num:  {background:"#0f172a",border:"1px solid #334155",borderRadius:6,padding:"4px 10px",color:"#e2e8f0",fontSize:13,fontWeight:700,cursor:"pointer"},
     mover:{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:100,display:"flex",alignItems:"center",justifyContent:"center"},
-    mbox: {background:"#1e293b",border:"1px solid #334155",borderRadius:16,padding:28,width:460,maxWidth:"92vw",maxHeight:"92vh",overflowY:"auto"},
+    mbox: {background:"#1e293b",border:"1px solid #334155",borderRadius:16,padding:28,width:480,maxWidth:"92vw",maxHeight:"92vh",overflowY:"auto"},
   };
 
   return (
@@ -1924,10 +2048,10 @@ function App() {
           </div>
         </div>
         <div style={S.tabs}>
-          <button style={S.tab(view==="projects")} onClick={() => { setView("projects"); setSelProject(null); setSearch(""); }}>📋 Proyectos</button>
-          <button style={S.tab(view==="people")}   onClick={() => { setView("people");   setSelPerson(null);  setSearch(""); }}>👥 Personas</button>
-          <button style={S.tab(view==="calendar")} onClick={() => { setView("calendar"); setSearch(""); }}>📅 Calendario</button>
-          <button style={S.tab(view==="report")}   onClick={() => { setView("report");   setSearch(""); }}>📊 Informe</button>
+          <button style={S.tab(view==="projects")} onClick={()=>{setView("projects");setSelProject(null);setSearch("");}}>📋 Proyectos</button>
+          <button style={S.tab(view==="people")}   onClick={()=>{setView("people");setSelPerson(null);setSearch("");}}>👥 Personas</button>
+          <button style={S.tab(view==="calendar")} onClick={()=>{setView("calendar");setSearch("");}}>📅 Calendario</button>
+          <button style={S.tab(view==="report")}   onClick={()=>{setView("report");setSearch("");}}>📊 Informe</button>
         </div>
       </div>
 
@@ -1936,69 +2060,68 @@ function App() {
         {/* KPIs */}
         <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:12,marginBottom:22}}>
           {[
-            {label:"Proyectos",        value:projects.length,                              sub:enRiesgo+" en riesgo",              c:enRiesgo>0?"#ef4444":"#22c55e"},
-            {label:"Activos hoy",      value:activosHoy,                                  sub:"proyectos en marcha",              c:"#3b82f6"},
-            {label:"Equipo activo",    value:activos+"/26",                               sub:"personas disponibles",             c:"#3b82f6"},
-            {label:"H. oferta total",  value:totalOferta.toLocaleString()+"h",            sub:totalConsumidas.toLocaleString()+"h consumidas", c:"#f59e0b"},
-            {label:"Avance global",    value:Math.round(totalConsumidas/totalOferta*100)+"%", sub:"consumidas sobre oferta",      c:"#22c55e"},
-          ].map(kpi => (
-            <div key={kpi.label} style={S.kpi}>
-              <div style={{fontSize:10,color:"#64748b",textTransform:"uppercase",letterSpacing:"0.5px",marginBottom:6}}>{kpi.label}</div>
-              <div style={{fontSize:22,fontWeight:800,color:"#f1f5f9",letterSpacing:"-0.5px"}}>{kpi.value}</div>
-              <div style={{fontSize:11,color:kpi.c,marginTop:4}}>{kpi.sub}</div>
+            {label:"Proyectos",       value:projects.length,                                 sub:enRiesgo+" en riesgo",           c:enRiesgo>0?"#ef4444":"#22c55e"},
+            {label:"Activos hoy",     value:activosHoy,                                      sub:"proyectos en marcha",           c:"#3b82f6"},
+            {label:"Equipo activo",   value:activos+"/26",                                   sub:"personas disponibles",          c:"#3b82f6"},
+            {label:"H. oferta total", value:totalOferta.toLocaleString()+"h",                sub:totalConsumidas.toLocaleString()+"h consumidas", c:"#f59e0b"},
+            {label:"Avance global",   value:Math.round(totalConsumidas/totalOferta*100)+"%", sub:"consumidas sobre oferta",       c:"#22c55e"},
+          ].map(k=>(
+            <div key={k.label} style={S.kpi}>
+              <div style={{fontSize:10,color:"#64748b",textTransform:"uppercase",letterSpacing:"0.5px",marginBottom:6}}>{k.label}</div>
+              <div style={{fontSize:22,fontWeight:800,color:"#f1f5f9",letterSpacing:"-0.5px"}}>{k.value}</div>
+              <div style={{fontSize:11,color:k.c,marginTop:4}}>{k.sub}</div>
             </div>
           ))}
         </div>
 
-        {/* CALENDAR VIEW */}
+        {/* CALENDAR */}
         {view==="calendar" && (
           <div>
             <div style={{display:"flex",gap:4,background:"#0f172a",borderRadius:10,padding:4,marginBottom:20,width:"fit-content"}}>
-              <button style={S.tab(calTab==="proyectos")} onClick={() => setCalTab("proyectos")}>📅 Proyectos</button>
-              <button style={S.tab(calTab==="equipo")}    onClick={() => setCalTab("equipo")}>👤 Equipo</button>
+              <button style={S.tab(calTab==="proyectos")} onClick={()=>setCalTab("proyectos")}>📅 Proyectos</button>
+              <button style={S.tab(calTab==="equipo")}    onClick={()=>setCalTab("equipo")}>👤 Equipo</button>
             </div>
             {calTab==="proyectos"
               ? <GanttView projects={projects} assignments={assignments}/>
-              : <PeopleGanttView projects={projects} people={people} assignments={assignments}/>
+              : <PeopleGanttView projects={projects} people={people} assignments={assignments} absences={absences} onUpdateAbsences={abs=>update({absences:abs})}/>
             }
           </div>
         )}
 
-        {/* REPORT VIEW */}
+        {/* REPORT */}
         {view==="report" && <ReportView projects={projects} people={people} assignments={assignments}/>}
 
         {/* PROJECTS VIEW */}
         {view==="projects" && (
           <div>
-            {/* Toolbar */}
             <div style={{display:"flex",gap:10,marginBottom:14,alignItems:"center",flexWrap:"wrap"}}>
-              <input placeholder="Buscar proyecto, cliente, código OT…" value={search} onChange={e => setSearch(e.target.value)} style={{...S.srch,marginBottom:0,flex:1,minWidth:180}}/>
+              <input placeholder="Buscar proyecto, cliente, código OT…" value={search} onChange={e=>setSearch(e.target.value)} style={{...S.srch,marginBottom:0,flex:1,minWidth:180}}/>
               <div style={{display:"flex",gap:3,background:"#0f172a",borderRadius:8,padding:3}}>
-                {[{id:"Activos",label:"🟢 Activos"},{id:"Cerrados",label:"⬛ Cerrados"},{id:"Todos",label:"Todos"}].map(f => (
-                  <button key={f.id} onClick={() => setProjStatusFilter(f.id)}
+                {[{id:"Activos",label:"🟢 Activos"},{id:"Cerrados",label:"⬛ Cerrados"},{id:"Todos",label:"Todos"}].map(f=>(
+                  <button key={f.id} onClick={()=>setProjStatusFilter(f.id)}
                     style={{border:"none",borderRadius:6,padding:"6px 13px",fontSize:11,fontWeight:600,cursor:"pointer",background:projStatusFilter===f.id?"#3b82f6":"transparent",color:projStatusFilter===f.id?"#fff":"#64748b"}}>
                     {f.label}
                   </button>
                 ))}
               </div>
               <div style={{display:"flex",gap:2,background:"#0f172a",borderRadius:8,padding:3}}>
-                <button onClick={() => { setProjView("cards"); setSelProjIds(new Set()); }} style={{border:"none",borderRadius:6,padding:"6px 10px",fontSize:14,cursor:"pointer",background:projView==="cards"?"#3b82f6":"transparent",color:projView==="cards"?"#fff":"#64748b"}}>⊞</button>
-                <button onClick={() => { setProjView("table"); setSelProjIds(new Set()); }} style={{border:"none",borderRadius:6,padding:"6px 10px",fontSize:14,cursor:"pointer",background:projView==="table"?"#3b82f6":"transparent",color:projView==="table"?"#fff":"#64748b"}}>☰</button>
+                <button onClick={()=>{setProjView("cards");setSelProjIds(new Set());}} style={{border:"none",borderRadius:6,padding:"6px 10px",fontSize:14,cursor:"pointer",background:projView==="cards"?"#3b82f6":"transparent",color:projView==="cards"?"#fff":"#64748b"}}>⊞</button>
+                <button onClick={()=>{setProjView("table");setSelProjIds(new Set());}} style={{border:"none",borderRadius:6,padding:"6px 10px",fontSize:14,cursor:"pointer",background:projView==="table"?"#3b82f6":"transparent",color:projView==="table"?"#fff":"#64748b"}}>☰</button>
               </div>
               {projView==="table" && selProjIds.size>0 && (
-                <button onClick={deleteSelProjects} style={{...S.btn("danger"),display:"flex",alignItems:"center",gap:6}}>
-                  🗑️ Eliminar {selProjIds.size}
-                </button>
+                <button onClick={deleteSelProjects} style={{...S.btn("danger"),display:"flex",alignItems:"center",gap:6}}>🗑️ Eliminar {selProjIds.size}</button>
               )}
               <button style={{...S.btn("primary"),whiteSpace:"nowrap",padding:"10px 18px",fontSize:13}} onClick={openNewProject}>+ Nuevo proyecto</button>
             </div>
 
+            {/* PROJECT DETAIL */}
             {selProject && projView==="cards" && (() => {
               const proj = selProject;
               const asgns = asgnByProject(proj.id);
-              const rent = rentColor(proj.horasOferta, proj.horasConsumidas);
-              const pct = proj.horasOferta>0 ? Math.round(proj.horasConsumidas/proj.horasOferta*100) : 0;
+              const rent = rentColor(proj.horasOferta,proj.horasConsumidas);
+              const pct = proj.horasOferta>0?Math.round(proj.horasConsumidas/proj.horasOferta*100):0;
               const isEditC = editProjKey===proj.id;
+              const hitos = proj.hitos||[];
               return (
                 <div style={S.det}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
@@ -2012,13 +2135,15 @@ function App() {
                       <div style={{fontSize:12,color:"#64748b",marginTop:2}}>{proj.client} · {proj.bimId}</div>
                     </div>
                     <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                      <button style={S.btn("outline")} onClick={() => { setDateModal({projectId:proj.id}); setDInicio(proj.inicio||""); setDFin(proj.fin||""); setDEntrega(proj.entrega||""); }}>📅 Fechas</button>
-                      <button style={S.btn("ghost")} onClick={() => setSelProject(null)}>✕</button>
+                      <button style={S.btn("outline")} onClick={()=>{setDateModal({projectId:proj.id});setDInicio(proj.inicio||"");setDFin(proj.fin||"");setDEntrega(proj.entrega||"");}}>📅 Fechas</button>
+                      <button style={S.btn("outline")} onClick={()=>openEditProject(proj)}>✏️ Editar</button>
+                      <button style={S.btn("ghost")}   onClick={()=>setSelProject(null)}>✕</button>
                     </div>
                   </div>
+
                   {proj.inicio && (
                     <div style={{display:"flex",gap:16,marginBottom:14,padding:"10px 14px",background:"#0f172a",borderRadius:8,flexWrap:"wrap"}}>
-                      {[{label:"Inicio",value:fmtD(parseD(proj.inicio)),color:"#22c55e"},{label:"Fin est.",value:fmtD(parseD(proj.fin)),color:"#f59e0b"},{label:"Entrega",value:proj.entrega?fmtD(parseD(proj.entrega)):"—",color:"#f97316"}].map(d => (
+                      {[{label:"Inicio",value:fmtD(parseD(proj.inicio)),color:"#22c55e"},{label:"Fin est.",value:fmtD(parseD(proj.fin)),color:"#f59e0b"},{label:"Entrega",value:proj.entrega?fmtD(parseD(proj.entrega)):"—",color:"#f97316"}].map(d=>(
                         <div key={d.label}>
                           <div style={{fontSize:10,color:"#475569",textTransform:"uppercase",letterSpacing:"0.5px"}}>{d.label}</div>
                           <div style={{fontSize:12,fontWeight:700,color:d.color}}>{d.value}</div>
@@ -2026,12 +2151,29 @@ function App() {
                       ))}
                     </div>
                   )}
+
+                  {/* Hitos */}
+                  {hitos.length>0 && (
+                    <div style={{marginBottom:16,padding:"12px 14px",background:"#0f172a",borderRadius:8}}>
+                      <div style={{fontSize:10,color:"#64748b",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.5px",marginBottom:8}}>Hitos de entrega</div>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+                        {hitos.map((h,i)=>(
+                          <div key={i} style={{display:"flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:h.ok?"#22c55e20":"#f59e0b15",border:"1px solid "+(h.ok?"#22c55e40":"#f59e0b40")}}>
+                            <span style={{fontSize:10}}>{h.ok?"✅":"🔶"}</span>
+                            <span style={{fontSize:11,fontWeight:600,color:h.ok?"#22c55e":"#f59e0b"}}>{h.n}</span>
+                            {h.fecha && <span style={{fontSize:9,color:"#64748b"}}>{fmtShort(parseD(h.fecha))}</span>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
-                    {[{label:"Modelado",oferta:proj.horasOfertaMod||0,cons:proj.horasConsMod||0,color:"#3b82f6"},{label:"Coordinación",oferta:proj.horasOfertaCoo||0,cons:proj.horasConsCoo||0,color:"#a78bfa"}].map(seg => {
-                      const sp = seg.oferta>0 ? Math.round(seg.cons/seg.oferta*100) : 0;
+                    {[{label:"Modelado",oferta:proj.horasOfertaMod||0,cons:proj.horasConsMod||0,color:"#3b82f6"},{label:"Coordinación",oferta:proj.horasOfertaCoo||0,cons:proj.horasConsCoo||0,color:"#a78bfa"}].map(seg=>{
+                      const sp=seg.oferta>0?Math.round(seg.cons/seg.oferta*100):0;
                       return (
                         <div key={seg.label} style={{background:"#0f172a",borderRadius:8,padding:"12px 14px",border:"1px solid "+seg.color+"30"}}>
-                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                          <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
                             <span style={{fontSize:10,fontWeight:700,color:seg.color,textTransform:"uppercase",letterSpacing:"0.5px"}}>{seg.label}</span>
                             <span style={{fontSize:11,fontWeight:700,color:progressColor(sp)}}>{sp}%</span>
                           </div>
@@ -2046,6 +2188,7 @@ function App() {
                       );
                     })}
                   </div>
+
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
                     <div style={{background:"#0f172a",borderRadius:8,padding:"10px 14px"}}>
                       <span style={S.lbl}>Total oferta</span>
@@ -2058,19 +2201,20 @@ function App() {
                     <div style={{background:"#0f172a",borderRadius:8,padding:"10px 14px"}}>
                       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:2}}>
                         <span style={S.lbl}>H. Consumidas</span>
-                        {!isEditC && <button style={{...S.btn("ghost"),fontSize:10,color:"#3b82f6"}} onClick={() => { setEditProjKey(proj.id); setEditProjVal(String(proj.horasConsumidas)); }}>editar</button>}
+                        {!isEditC && <button style={{...S.btn("ghost"),fontSize:10,color:"#3b82f6"}} onClick={()=>{setEditProjKey(proj.id);setEditProjVal(String(proj.horasConsumidas));}}>editar</button>}
                       </div>
                       {isEditC ? (
                         <div style={{display:"flex",gap:4,alignItems:"center",marginTop:4}}>
-                          <input type="number" value={editProjVal} autoFocus onChange={e => setEditProjVal(e.target.value)} onKeyDown={e => e.key==="Enter" && saveEditConsumed()} style={{...S.inp,marginTop:0,padding:"5px 8px",width:90,textAlign:"center"}}/>
+                          <input type="number" value={editProjVal} autoFocus onChange={e=>setEditProjVal(e.target.value)} onKeyDown={e=>e.key==="Enter"&&saveEditConsumed()} style={{...S.inp,marginTop:0,padding:"5px 8px",width:90,textAlign:"center"}}/>
                           <button style={S.btn("primary")} onClick={saveEditConsumed}>✓</button>
-                          <button style={S.btn("ghost")}   onClick={() => setEditProjKey(null)}>✕</button>
+                          <button style={S.btn("ghost")}   onClick={()=>setEditProjKey(null)}>✕</button>
                         </div>
                       ) : (
                         <div style={{fontSize:22,fontWeight:800,color:"#f1f5f9"}}>{proj.horasConsumidas}h</div>
                       )}
                     </div>
                   </div>
+
                   <div style={{marginBottom:16}}>
                     <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"#64748b",marginBottom:6}}>
                       <span>CONSUMO SOBRE OFERTA</span>
@@ -2078,44 +2222,53 @@ function App() {
                     </div>
                     <Bar pct={pct} width="100%"/>
                   </div>
+
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
                     <div style={{fontSize:12,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"0.5px"}}>Equipo — {asgns.length} personas</div>
-                    <button style={S.btn("primary")} onClick={() => { setModal({type:"to-project",projectId:proj.id}); setMPersonId(""); setMHoras(""); setMRol("Modelado"); setMSoftware("Revit"); }}>+ Asignar persona</button>
+                    <button style={S.btn("primary")} onClick={()=>{setModal({type:"to-project",projectId:proj.id});setMPersonId("");setMHoras("");setMRol("Modelado");setMSoftware("Revit");setMFechaIni(proj.inicio||"");setMFechaFin(proj.fin||"");setMPct(100);setMHorasCalc(0);}}>+ Asignar persona</button>
                   </div>
                   {asgns.length===0 && <div style={{color:"#475569",textAlign:"center",padding:16}}>Sin equipo asignado</div>}
-                  {asgns.map(a => {
-                    const person = people.find(p => p.id===a.personId);
+                  {asgns.map(a=>{
+                    const person=people.find(p=>p.id===a.personId);
                     if(!person) return null;
-                    const sc = statusColor(person.status);
-                    const key = a.personId+"|"+a.projectId+"|"+(a.rol||"");
-                    const isEd = editKey===key;
-                    const rC = a.rol==="Coordinación"?"#a78bfa":"#3b82f6";
-                    const swC = a.software==="Civil 3D"?"#f59e0b":"#3b82f6";
+                    const sc=statusColor(person.status);
+                    const key=a.personId+"|"+a.projectId+"|"+(a.rol||"");
+                    const isEd=editKey===key;
+                    const rC=a.rol==="Coordinación"?"#a78bfa":"#3b82f6";
+                    const swC=a.software==="Civil 3D"?"#f59e0b":"#3b82f6";
                     return (
-                      <div key={key} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid #0f172a"}}>
-                        <div style={{display:"flex",gap:10,alignItems:"center"}}>
-                          <Avatar name={person.name} status={person.status}/>
-                          <div>
-                            <div style={{fontSize:13,fontWeight:600,color:"#e2e8f0"}}>{person.name}</div>
-                            <div style={{fontSize:11,color:"#64748b"}}>{person.perfil}</div>
-                          </div>
-                        </div>
-                        <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                          {a.rol && <span style={{background:rC+"20",color:rC,fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20,border:"1px solid "+rC+"40"}}>{a.rol==="Coordinación"?"🟣 COO":"🟦 MOD"}</span>}
-                          {a.software && <span style={{background:swC+"15",color:swC,fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20}}>{a.software}</span>}
-                          <Badge bg={sc.bg} text={sc.text}>{person.status}</Badge>
-                          {isEd ? (
-                            <div style={{display:"flex",gap:4,alignItems:"center"}}>
-                              <input type="number" value={editVal} autoFocus onChange={e => setEditVal(e.target.value)} onKeyDown={e => e.key==="Enter" && saveEditHoras()} style={{...S.inp,width:75,marginTop:0,padding:"5px 8px",textAlign:"center"}}/>
-                              <button style={S.btn("primary")} onClick={saveEditHoras}>✓</button>
-                              <button style={S.btn("ghost")}   onClick={() => setEditKey(null)}>✕</button>
+                      <div key={key} style={{padding:"10px 0",borderBottom:"1px solid #0f172a"}}>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                          <div style={{display:"flex",gap:10,alignItems:"center"}}>
+                            <Avatar name={person.name} status={person.status}/>
+                            <div>
+                              <div style={{fontSize:13,fontWeight:600,color:"#e2e8f0"}}>{person.name}</div>
+                              <div style={{fontSize:11,color:"#64748b"}}>{person.perfil}</div>
+                              {(a.fechaIni||a.fechaFin) && (
+                                <div style={{fontSize:10,color:"#475569",marginTop:2}}>
+                                  {a.fechaIni?fmtShort(parseD(a.fechaIni)):"?"} → {a.fechaFin?fmtShort(parseD(a.fechaFin)):"?"}
+                                  {a.pct && <span style={{color:"#22c55e",fontWeight:700,marginLeft:6}}>{a.pct}%</span>}
+                                </div>
+                              )}
                             </div>
-                          ) : (
-                            <button style={S.num} onClick={() => { setEditKey(key); setEditVal(String(a.horas)); }}>{a.horas}h</button>
-                          )}
-                          <button style={S.btn("ghost")} onClick={() => removeAssignment(a.personId, a.projectId, a.rol)}>
-                            <span style={{color:"#ef4444",fontSize:16}}>×</span>
-                          </button>
+                          </div>
+                          <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                            {a.rol && <span style={{background:rC+"20",color:rC,fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20,border:"1px solid "+rC+"40"}}>{a.rol==="Coordinación"?"🟣 COO":"🟦 MOD"}</span>}
+                            {a.software && <span style={{background:swC+"15",color:swC,fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20}}>{a.software}</span>}
+                            <Badge bg={sc.bg} text={sc.text}>{person.status}</Badge>
+                            {isEd ? (
+                              <div style={{display:"flex",gap:4,alignItems:"center"}}>
+                                <input type="number" value={editVal} autoFocus onChange={e=>setEditVal(e.target.value)} onKeyDown={e=>e.key==="Enter"&&saveEditHoras()} style={{...S.inp,width:75,marginTop:0,padding:"5px 8px",textAlign:"center"}}/>
+                                <button style={S.btn("primary")} onClick={saveEditHoras}>✓</button>
+                                <button style={S.btn("ghost")}   onClick={()=>setEditKey(null)}>✕</button>
+                              </div>
+                            ) : (
+                              <button style={S.num} onClick={()=>{setEditKey(key);setEditVal(String(a.horas));}}>{a.horas}h</button>
+                            )}
+                            <button style={S.btn("ghost")} onClick={()=>removeAssignment(a.personId,a.projectId,a.rol)}>
+                              <span style={{color:"#ef4444",fontSize:16}}>×</span>
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );
@@ -2130,16 +2283,18 @@ function App() {
               </div>
             )}
 
-            {/* CARDS VIEW */}
-            {projView==="cards" && filteredProjects.map((proj,i) => {
-              const asgns = asgnByProject(proj.id);
-              const pct = proj.horasOferta>0 ? Math.round(proj.horasConsumidas/proj.horasOferta*100) : 0;
-              const rent = rentColor(proj.horasOferta, proj.horasConsumidas);
-              const closed = proj.status==="Cerrado";
-              const sel = selProject && selProject.id===proj.id;
+            {/* CARDS */}
+            {projView==="cards" && filteredProjects.map((proj,i)=>{
+              const asgns=asgnByProject(proj.id);
+              const pct=proj.horasOferta>0?Math.round(proj.horasConsumidas/proj.horasOferta*100):0;
+              const rent=rentColor(proj.horasOferta,proj.horasConsumidas);
+              const closed=proj.status==="Cerrado";
+              const sel=selProject&&selProject.id===proj.id;
+              const hitos=proj.hitos||[];
+              const hitosOk=hitos.filter(h=>h.ok).length;
               return (
                 <div key={proj.id} style={{...S.card(sel),opacity:closed?0.75:1}}>
-                  <div style={{padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}} onClick={() => setSelProject(sel?null:proj)}>
+                  <div style={{padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}} onClick={()=>setSelProject(sel?null:proj)}>
                     <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
                       <div style={{width:10,height:10,borderRadius:"50%",background:GANTT_COLORS[i%GANTT_COLORS.length],flexShrink:0}}/>
                       <div style={{minWidth:0}}>
@@ -2149,8 +2304,9 @@ function App() {
                     </div>
                     <div style={{display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
                       {!closed && <Badge bg={rent.bg} text={rent.text}>{rent.label}</Badge>}
-                      {closed && <Badge bg="#33415530" text="#64748b">CERRADO</Badge>}
+                      {closed  && <Badge bg="#33415530" text="#64748b">CERRADO</Badge>}
                       <Badge bg={tipoColor(proj.tipo)+"25"} text={tipoColor(proj.tipo)}>{proj.tipo}</Badge>
+                      {hitos.length>0 && <span style={{fontSize:10,color:hitosOk===hitos.length?"#22c55e":"#f59e0b",fontWeight:700}}>◆{hitosOk}/{hitos.length}</span>}
                       <span style={{fontSize:11,color:"#64748b"}}>{asgns.length}👤</span>
                       {!closed && (
                         <div style={{display:"flex",alignItems:"center",gap:6}}>
@@ -2158,42 +2314,42 @@ function App() {
                           <span style={{fontSize:11,fontWeight:600,width:34,textAlign:"right",color:progressColor(pct)}}>{pct}%</span>
                         </div>
                       )}
-                      <button style={{...S.btn("ghost"),padding:"4px 6px",fontSize:11,color:"#94a3b8"}} onClick={e => { e.stopPropagation(); openEditProject(proj); }}>✏️</button>
+                      <button style={{...S.btn("ghost"),padding:"4px 6px",fontSize:11,color:"#94a3b8"}} onClick={e=>{e.stopPropagation();openEditProject(proj);}}>✏️</button>
                     </div>
                   </div>
                 </div>
               );
             })}
 
-            {/* TABLE VIEW */}
+            {/* TABLE */}
             {projView==="table" && filteredProjects.length>0 && (
               <div style={{background:"#1e293b",border:"1px solid #1e3a5f",borderRadius:12,overflow:"auto"}}>
                 <table style={{width:"100%",borderCollapse:"collapse",minWidth:980}}>
                   <thead>
                     <tr style={{background:"#0f172a"}}>
                       <th style={{padding:"10px 12px",width:36}}>
-                        <input type="checkbox" checked={selProjIds.size===filteredProjects.length && filteredProjects.length>0} onChange={toggleAllProjs} style={{cursor:"pointer",width:14,height:14,accentColor:"#3b82f6"}}/>
+                        <input type="checkbox" checked={selProjIds.size===filteredProjects.length&&filteredProjects.length>0} onChange={toggleAllProjs} style={{cursor:"pointer",width:14,height:14,accentColor:"#3b82f6"}}/>
                       </th>
-                      {["Proyecto","Código","Cliente","Tipo","Estado","H.Oferta","H.Cons","MOD Of.","MOD Cons","COO Of.","COO Cons","Inicio","Fin","Entrega","Equipo",""].map(h => (
+                      {["Proyecto","Código","Cliente","Tipo","Estado","H.Oferta","H.Cons","MOD Of.","MOD Cons","COO Of.","COO Cons","Inicio","Fin","Entrega","Hitos","Equipo",""].map(h=>(
                         <th key={h} style={{padding:"8px 10px",fontSize:9,fontWeight:700,color:"#475569",textTransform:"uppercase",letterSpacing:"0.4px",whiteSpace:"nowrap",textAlign:"left"}}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredProjects.map((proj, i) => {
-                      const closed = proj.status==="Cerrado";
-                      const pct = proj.horasOferta>0 ? Math.round(proj.horasConsumidas/proj.horasOferta*100) : 0;
-                      const nP = asgnByProject(proj.id).length;
-                      const cs = {padding:"7px 10px",fontSize:11,borderBottom:"1px solid #0f172a",color:"#e2e8f0",verticalAlign:"middle"};
-                      const sel = selProjIds.has(proj.id);
+                    {filteredProjects.map((proj,i)=>{
+                      const closed=proj.status==="Cerrado";
+                      const pct=proj.horasOferta>0?Math.round(proj.horasConsumidas/proj.horasOferta*100):0;
+                      const nP=asgnByProject(proj.id).length;
+                      const hitos=proj.hitos||[];
+                      const hitosOk=hitos.filter(h=>h.ok).length;
+                      const cs={padding:"7px 10px",fontSize:11,borderBottom:"1px solid #0f172a",color:"#e2e8f0",verticalAlign:"middle"};
+                      const sel=selProjIds.has(proj.id);
                       return (
                         <tr key={proj.id} style={{background:sel?"#1e3a8a30":i%2===0?"#1e293b":"#162032",opacity:closed?0.75:1}}>
                           <td style={{...cs,textAlign:"center"}}>
-                            <input type="checkbox" checked={sel} onChange={() => toggleProjSel(proj.id)} style={{cursor:"pointer",width:13,height:13,accentColor:"#3b82f6"}}/>
+                            <input type="checkbox" checked={sel} onChange={()=>toggleProjSel(proj.id)} style={{cursor:"pointer",width:13,height:13,accentColor:"#3b82f6"}}/>
                           </td>
-                          <td style={cs}>
-                            <div style={{fontWeight:700,color:closed?"#94a3b8":"#f1f5f9",textDecoration:closed?"line-through":"none",whiteSpace:"nowrap"}}>{proj.name}</div>
-                          </td>
+                          <td style={cs}><div style={{fontWeight:700,color:closed?"#94a3b8":"#f1f5f9",textDecoration:closed?"line-through":"none",whiteSpace:"nowrap"}}>{proj.name}</div></td>
                           <td style={{...cs,color:"#64748b",fontSize:10}}>{proj.bimId||proj.id}</td>
                           <td style={{...cs,color:"#94a3b8"}}>{proj.client}</td>
                           <td style={cs}><span style={{background:tipoColor(proj.tipo)+"25",color:tipoColor(proj.tipo),fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:20}}>{proj.tipo}</span></td>
@@ -2214,10 +2370,11 @@ function App() {
                           <td style={{...cs,color:"#64748b",fontSize:10,whiteSpace:"nowrap"}}>{proj.inicio||"—"}</td>
                           <td style={{...cs,color:"#64748b",fontSize:10,whiteSpace:"nowrap"}}>{proj.fin||"—"}</td>
                           <td style={{...cs,color:"#f59e0b",fontSize:10,fontWeight:600,whiteSpace:"nowrap"}}>{proj.entrega||"—"}</td>
+                          <td style={{...cs,textAlign:"center",color:hitosOk===hitos.length&&hitos.length>0?"#22c55e":"#f59e0b",fontWeight:700,fontSize:11}}>{hitos.length>0?hitosOk+"/"+hitos.length:"—"}</td>
                           <td style={{...cs,textAlign:"center",color:"#94a3b8"}}>{nP}👤</td>
                           <td style={{...cs,whiteSpace:"nowrap"}}>
-                            <button onClick={() => openEditProject(proj)} style={{border:"none",background:"#1e3a5f",color:"#94a3b8",borderRadius:6,padding:"3px 8px",fontSize:11,cursor:"pointer",marginRight:4}}>✏️</button>
-                            <button onClick={() => { if(window.confirm("¿Eliminar "+proj.name+"?")) { update({projects:projects.filter(p=>p.id!==proj.id),assignments:assignments.filter(a=>a.projectId!==proj.id)}); showToast("Eliminado"); } }} style={{border:"none",background:"#ef444420",color:"#ef4444",borderRadius:6,padding:"3px 8px",fontSize:11,cursor:"pointer"}}>🗑️</button>
+                            <button onClick={()=>openEditProject(proj)} style={{border:"none",background:"#1e3a5f",color:"#94a3b8",borderRadius:6,padding:"3px 8px",fontSize:11,cursor:"pointer",marginRight:4}}>✏️</button>
+                            <button onClick={()=>{if(window.confirm("¿Eliminar "+proj.name+"?")){update({projects:projects.filter(p=>p.id!==proj.id),assignments:assignments.filter(a=>a.projectId!==proj.id)});showToast("Eliminado");}}} style={{border:"none",background:"#ef444420",color:"#ef4444",borderRadius:6,padding:"3px 8px",fontSize:11,cursor:"pointer"}}>🗑️</button>
                           </td>
                         </tr>
                       );
@@ -2226,7 +2383,7 @@ function App() {
                 </table>
                 <div style={{padding:"10px 16px",fontSize:11,color:"#475569",borderTop:"1px solid #0f172a",display:"flex",justifyContent:"space-between"}}>
                   <span>{filteredProjects.length} proyectos · {selProjIds.size} seleccionados</span>
-                  <span style={{color:"#334155"}}>Usa ✏️ para editar · Selecciona varios para borrar en bloque</span>
+                  <span style={{color:"#334155"}}>✏️ editar · selecciona varios para borrar en bloque</span>
                 </div>
               </div>
             )}
@@ -2236,14 +2393,13 @@ function App() {
         {/* PEOPLE VIEW */}
         {view==="people" && (
           <div>
-            {/* SW KPIs */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
-              {["Revit","Civil 3D"].map(sw => {
-                const swColor = sw==="Revit"?"#3b82f6":"#f59e0b";
-                const members = people.filter(p => (p.software===sw||p.software==="Ambos") && (p.status==="Activo"||p.status==="Activa"||p.status==="Remota"));
-                const totalH = members.reduce((s,p) => s+(horasByPerson[p.id]||0), 0);
-                const avgLoad = members.length>0 ? Math.round(totalH/members.length/MAX_H*100) : 0;
-                const overloaded = members.filter(p => (horasByPerson[p.id]||0)/MAX_H>0.9).length;
+              {["Revit","Civil 3D"].map(sw=>{
+                const swColor=sw==="Revit"?"#3b82f6":"#f59e0b";
+                const members=people.filter(p=>(p.software===sw||p.software==="Ambos")&&(p.status==="Activo"||p.status==="Activa"||p.status==="Remota"));
+                const totalH=members.reduce((s,p)=>s+(horasByPerson[p.id]||0),0);
+                const avgLoad=members.length>0?Math.round(totalH/members.length/MAX_H*100):0;
+                const overloaded=members.filter(p=>(horasByPerson[p.id]||0)/MAX_H>0.9).length;
                 return (
                   <div key={sw} style={{background:"#1e293b",border:"1px solid "+swColor+"40",borderRadius:12,padding:"14px 18px",borderLeft:"4px solid "+swColor}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
@@ -2251,10 +2407,10 @@ function App() {
                       <div style={{fontSize:11,color:"#64748b"}}>{members.length} activos</div>
                     </div>
                     <div style={{display:"flex",gap:16}}>
-                      {[["Carga media",avgLoad+"%",avgLoad>=85?"#ef4444":avgLoad>=70?"#f59e0b":"#22c55e"],["Horas tot.",totalH+"h","#f1f5f9"],["Sobrecarg.",overloaded,overloaded>0?"#ef4444":"#22c55e"]].map(kpi => (
-                        <div key={kpi[0]}>
-                          <div style={{fontSize:9,color:"#64748b",textTransform:"uppercase",letterSpacing:"0.4px"}}>{kpi[0]}</div>
-                          <div style={{fontSize:22,fontWeight:800,color:kpi[2]}}>{kpi[1]}</div>
+                      {[["Carga media",avgLoad+"%",avgLoad>=85?"#ef4444":avgLoad>=70?"#f59e0b":"#22c55e"],["Horas tot.",totalH+"h","#f1f5f9"],["Sobrecarg.",overloaded,overloaded>0?"#ef4444":"#22c55e"]].map(k=>(
+                        <div key={k[0]}>
+                          <div style={{fontSize:9,color:"#64748b",textTransform:"uppercase",letterSpacing:"0.4px"}}>{k[0]}</div>
+                          <div style={{fontSize:22,fontWeight:800,color:k[2]}}>{k[1]}</div>
                         </div>
                       ))}
                     </div>
@@ -2262,20 +2418,20 @@ function App() {
                 );
               })}
             </div>
-            {/* Toolbar */}
+
             <div style={{display:"flex",gap:10,marginBottom:14,alignItems:"center",flexWrap:"wrap"}}>
-              <input placeholder="Buscar persona, perfil…" value={search} onChange={e => setSearch(e.target.value)} style={{...S.srch,marginBottom:0,flex:1,minWidth:200}}/>
+              <input placeholder="Buscar persona, perfil…" value={search} onChange={e=>setSearch(e.target.value)} style={{...S.srch,marginBottom:0,flex:1,minWidth:200}}/>
               <div style={{display:"flex",gap:3,background:"#0f172a",borderRadius:8,padding:3,flexShrink:0}}>
-                {["Todos","Revit","Civil 3D","Ambos"].map(sw => (
-                  <button key={sw} onClick={() => setSoftwareFilter(sw)}
+                {["Todos","Revit","Civil 3D","Ambos"].map(sw=>(
+                  <button key={sw} onClick={()=>setSoftwareFilter(sw)}
                     style={{border:"none",borderRadius:6,padding:"6px 14px",fontSize:11,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",background:softwareFilter===sw?(sw==="Revit"?"#3b82f6":sw==="Civil 3D"?"#f59e0b":sw==="Ambos"?"#22c55e":"#3b82f6"):"transparent",color:softwareFilter===sw?"#fff":"#64748b"}}>
                     {sw}
                   </button>
                 ))}
               </div>
               <div style={{display:"flex",gap:2,background:"#0f172a",borderRadius:8,padding:3,flexShrink:0}}>
-                <button onClick={() => { setPeopleView("cards"); setSelPersonIds(new Set()); }} style={{border:"none",borderRadius:6,padding:"6px 10px",fontSize:14,cursor:"pointer",background:peopleView==="cards"?"#3b82f6":"transparent",color:peopleView==="cards"?"#fff":"#64748b"}}>⊞</button>
-                <button onClick={() => { setPeopleView("table"); setSelPersonIds(new Set()); }} style={{border:"none",borderRadius:6,padding:"6px 10px",fontSize:14,cursor:"pointer",background:peopleView==="table"?"#3b82f6":"transparent",color:peopleView==="table"?"#fff":"#64748b"}}>☰</button>
+                <button onClick={()=>{setPeopleView("cards");setSelPersonIds(new Set());}} style={{border:"none",borderRadius:6,padding:"6px 10px",fontSize:14,cursor:"pointer",background:peopleView==="cards"?"#3b82f6":"transparent",color:peopleView==="cards"?"#fff":"#64748b"}}>⊞</button>
+                <button onClick={()=>{setPeopleView("table");setSelPersonIds(new Set());}} style={{border:"none",borderRadius:6,padding:"6px 10px",fontSize:14,cursor:"pointer",background:peopleView==="table"?"#3b82f6":"transparent",color:peopleView==="table"?"#fff":"#64748b"}}>☰</button>
               </div>
               {peopleView==="table" && selPersonIds.size>0 && (
                 <button onClick={deleteSelPeople} style={{...S.btn("danger"),flexShrink:0}}>🗑️ Eliminar {selPersonIds.size}</button>
@@ -2283,14 +2439,14 @@ function App() {
               <button style={{...S.btn("primary"),whiteSpace:"nowrap",padding:"10px 18px",fontSize:13,flexShrink:0}} onClick={openNewPerson}>+ Nueva persona</button>
             </div>
 
-            {/* Person detail */}
+            {/* PERSON DETAIL */}
             {selPerson && peopleView==="cards" && (() => {
-              const person = selPerson;
-              const asgns = asgnByPerson(person.id);
-              const totalAsig = asgns.reduce((s,a) => s+a.horas, 0);
-              const totalReal = asgns.reduce((s,a) => s+(a.horasReales||0), 0);
-              const cargaPct = Math.round(totalAsig/MAX_H*100);
-              const sc = statusColor(person.status);
+              const person=selPerson;
+              const asgns=asgnByPerson(person.id);
+              const totalAsig=asgns.reduce((s,a)=>s+a.horas,0);
+              const totalReal=asgns.reduce((s,a)=>s+(a.horasReales||0),0);
+              const cargaPct=Math.round(totalAsig/MAX_H*100);
+              const sc=statusColor(person.status);
               return (
                 <div style={S.det}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
@@ -2299,68 +2455,79 @@ function App() {
                       <div>
                         <div style={{fontSize:20,fontWeight:800,color:"#f1f5f9"}}>{person.name}</div>
                         <div style={{fontSize:12,color:"#64748b"}}>{person.perfil} · {person.ubicacion}</div>
+                        <div style={{fontSize:11,color:"#475569",marginTop:2}}>Jornada: <span style={{color:"#f59e0b",fontWeight:700}}>{person.horasDia||8}h/día</span></div>
                       </div>
                     </div>
                     <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                      <select value={person.status} onChange={e => updatePersonStatus(person.id, e.target.value)} style={{...S.sel,width:"auto",marginTop:0,fontSize:11,padding:"4px 8px"}}>
-                        {["Activo","Activa","Remota","Baja médica","Sin asignar"].map(s => <option key={s}>{s}</option>)}
+                      <select value={person.status} onChange={e=>updatePersonStatus(person.id,e.target.value)} style={{...S.sel,width:"auto",marginTop:0,fontSize:11,padding:"4px 8px"}}>
+                        {["Activo","Activa","Remota","Baja médica","Sin asignar"].map(s=><option key={s}>{s}</option>)}
                       </select>
-                      <button style={S.btn("ghost")} onClick={() => setSelPerson(null)}>✕</button>
+                      <button style={S.btn("outline")} onClick={()=>openEditPerson(person)}>✏️ Editar</button>
+                      <button style={S.btn("ghost")} onClick={()=>setSelPerson(null)}>✕</button>
                     </div>
                   </div>
+
                   <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:16}}>
-                    {[{label:"H. asignadas",value:totalAsig+"h",accent:null},{label:"H. reales",value:totalReal+"h",accent:"#3b82f6"},{label:"Pendientes",value:(totalAsig-totalReal)+"h",accent:totalAsig-totalReal<0?"#ef4444":"#f59e0b"},{label:"Carga",value:cargaPct+"%",accent:cargaPct>=100?"#ef4444":cargaPct>=80?"#f59e0b":"#22c55e"}].map(k => (
+                    {[{label:"H. asignadas",value:totalAsig+"h",accent:null},{label:"H. reales",value:totalReal+"h",accent:"#3b82f6"},{label:"Pendientes",value:(totalAsig-totalReal)+"h",accent:totalAsig-totalReal<0?"#ef4444":"#f59e0b"},{label:"Carga",value:cargaPct+"%",accent:cargaPct>=100?"#ef4444":cargaPct>=80?"#f59e0b":"#22c55e"}].map(k=>(
                       <div key={k.label} style={{background:"#0f172a",borderRadius:8,padding:"10px 14px"}}>
                         <span style={S.lbl}>{k.label}</span>
                         <div style={{fontSize:22,fontWeight:800,color:k.accent||"#f1f5f9"}}>{k.value}</div>
                       </div>
                     ))}
                   </div>
+
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
                     <div style={{fontSize:12,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"0.5px"}}>Proyectos — {asgns.length}</div>
-                    <button style={S.btn("primary")} onClick={() => { setModal({type:"to-person",personId:person.id}); setMProjectId(""); setMHoras(""); setMRol("Modelado"); setMSoftware(person.software==="Ambos"?"Revit":person.software||"Revit"); }}>+ Asignar proyecto</button>
+                    <button style={S.btn("primary")} onClick={()=>{setModal({type:"to-person",personId:person.id});setMProjectId("");setMHoras("");setMRol("Modelado");setMSoftware(person.software==="Ambos"?"Revit":person.software||"Revit");setMFechaIni("");setMFechaFin("");setMPct(100);setMHorasCalc(0);}}>+ Asignar proyecto</button>
                   </div>
+
                   {asgns.length===0 && <div style={{color:"#475569",textAlign:"center",padding:16}}>Sin proyectos asignados</div>}
-                  {asgns.map((a, idx) => {
-                    const proj = projects.find(p => p.id===a.projectId);
+                  {asgns.map((a,idx)=>{
+                    const proj=projects.find(p=>p.id===a.projectId);
                     if(!proj) return null;
-                    const reales = a.horasReales||0;
-                    const pctEj = a.horas>0 ? Math.round(reales/a.horas*100) : 0;
-                    const ejC = pctEj>=100?"#ef4444":pctEj>=80?"#f59e0b":"#22c55e";
-                    const key = a.personId+"|"+a.projectId+"|"+(a.rol||"");
-                    const realKey = "real|"+key;
-                    const isEdA = editKey===key;
-                    const isEdR = editRealKey===realKey;
-                    const rC = a.rol==="Coordinación"?"#a78bfa":"#3b82f6";
-                    const swC = a.software==="Civil 3D"?"#f59e0b":"#3b82f6";
+                    const reales=a.horasReales||0;
+                    const pctEj=a.horas>0?Math.round(reales/a.horas*100):0;
+                    const ejC=pctEj>=100?"#ef4444":pctEj>=80?"#f59e0b":"#22c55e";
+                    const key=a.personId+"|"+a.projectId+"|"+(a.rol||"");
+                    const realKey="real|"+key;
+                    const isEdA=editKey===key;
+                    const isEdR=editRealKey===realKey;
+                    const rC=a.rol==="Coordinación"?"#a78bfa":"#3b82f6";
+                    const swC=a.software==="Civil 3D"?"#f59e0b":"#3b82f6";
                     return (
-                      <div key={proj.id+"|"+(a.rol||idx)} style={{display:"grid",gridTemplateColumns:"1fr auto 80px 80px 120px 28px",gap:8,alignItems:"center",padding:"10px 0",borderBottom:"1px solid #0f172a"}}>
+                      <div key={proj.id+"|"+(a.rol||idx)} style={{display:"grid",gridTemplateColumns:"1fr auto 80px 80px 110px 28px",gap:8,alignItems:"center",padding:"10px 0",borderBottom:"1px solid #0f172a"}}>
                         <div>
                           <div style={{fontSize:13,fontWeight:600,color:"#e2e8f0"}}>{proj.name}</div>
                           <div style={{fontSize:10,color:"#475569"}}>{proj.client}</div>
+                          {(a.fechaIni||a.fechaFin) && (
+                            <div style={{fontSize:9,color:"#64748b",marginTop:2}}>
+                              {a.fechaIni?fmtShort(parseD(a.fechaIni)):"?"} → {a.fechaFin?fmtShort(parseD(a.fechaFin)):"?"}
+                              {a.pct && <span style={{color:"#22c55e",fontWeight:700,marginLeft:4}}>{a.pct}%</span>}
+                            </div>
+                          )}
                         </div>
                         <div style={{display:"flex",flexDirection:"column",gap:3}}>
                           {a.rol && <span style={{background:rC+"20",color:rC,fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:20,border:"1px solid "+rC+"30"}}>{a.rol==="Coordinación"?"🟣 COO":"🟦 MOD"}</span>}
                           {a.software && <span style={{background:swC+"15",color:swC,fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:20}}>{a.software}</span>}
                         </div>
                         <div style={{textAlign:"right"}}>
-                          {isEdA ? (
+                          {isEdA?(
                             <div style={{display:"flex",gap:2,justifyContent:"flex-end",alignItems:"center"}}>
-                              <input type="number" value={editVal} autoFocus onChange={e => setEditVal(e.target.value)} onKeyDown={e => e.key==="Enter" && saveEditHoras()} style={{...S.inp,width:56,marginTop:0,padding:"3px 6px",textAlign:"center",fontSize:11}}/>
+                              <input type="number" value={editVal} autoFocus onChange={e=>setEditVal(e.target.value)} onKeyDown={e=>e.key==="Enter"&&saveEditHoras()} style={{...S.inp,width:56,marginTop:0,padding:"3px 6px",textAlign:"center",fontSize:11}}/>
                               <button style={{...S.btn("primary"),padding:"3px 6px",fontSize:10}} onClick={saveEditHoras}>✓</button>
                             </div>
-                          ) : (
-                            <button style={{...S.num,fontSize:12}} onClick={() => { setEditKey(key); setEditVal(String(a.horas)); }}>{a.horas}h</button>
+                          ):(
+                            <button style={{...S.num,fontSize:12}} onClick={()=>{setEditKey(key);setEditVal(String(a.horas));}}>{a.horas}h</button>
                           )}
                         </div>
                         <div style={{textAlign:"right"}}>
-                          {isEdR ? (
+                          {isEdR?(
                             <div style={{display:"flex",gap:2,justifyContent:"flex-end",alignItems:"center"}}>
-                              <input type="number" value={editRealVal} autoFocus onChange={e => setEditRealVal(e.target.value)} onKeyDown={e => e.key==="Enter" && saveEditReal()} style={{...S.inp,width:56,marginTop:0,padding:"3px 6px",textAlign:"center",fontSize:11}}/>
+                              <input type="number" value={editRealVal} autoFocus onChange={e=>setEditRealVal(e.target.value)} onKeyDown={e=>e.key==="Enter"&&saveEditReal()} style={{...S.inp,width:56,marginTop:0,padding:"3px 6px",textAlign:"center",fontSize:11}}/>
                               <button style={{...S.btn("primary"),padding:"3px 6px",fontSize:10}} onClick={saveEditReal}>✓</button>
                             </div>
-                          ) : (
-                            <button onClick={() => { setEditRealKey(realKey); setEditRealVal(String(reales)); }} style={{background:"#0f172a",border:"1px solid #1e3a5f",borderRadius:6,padding:"4px 10px",color:"#3b82f6",fontSize:12,fontWeight:700,cursor:"pointer"}}>{reales}h</button>
+                          ):(
+                            <button onClick={()=>{setEditRealKey(realKey);setEditRealVal(String(reales));}} style={{background:"#0f172a",border:"1px solid #1e3a5f",borderRadius:6,padding:"4px 10px",color:"#3b82f6",fontSize:12,fontWeight:700,cursor:"pointer"}}>{reales}h</button>
                           )}
                         </div>
                         <div>
@@ -2369,28 +2536,69 @@ function App() {
                           </div>
                           <div style={{fontSize:9,fontWeight:700,color:ejC,textAlign:"center",marginTop:2}}>{pctEj}%</div>
                         </div>
-                        <button style={S.btn("ghost")} onClick={() => removeAssignment(a.personId, a.projectId, a.rol)}>
+                        <button style={S.btn("ghost")} onClick={()=>removeAssignment(a.personId,a.projectId,a.rol)}>
                           <span style={{color:"#ef4444",fontSize:14}}>×</span>
                         </button>
                       </div>
                     );
                   })}
+
+                  {/* AUSENCIAS */}
+                  <div style={{marginTop:20,paddingTop:16,borderTop:"1px solid #1e3a5f"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                      <div style={{fontSize:12,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"0.5px"}}>🗓️ Ausencias — {(absences||[]).filter(ab=>ab.personId===person.id).length}</div>
+                      <button style={S.btn("outline")} onClick={()=>{const newAb={id:"ab"+Date.now(),personId:person.id,tipo:"Vacaciones",inicio:"",fin:"",nota:""};update({absences:[...(absences||[]),newAb]});}}>+ Añadir ausencia</button>
+                    </div>
+                    {(absences||[]).filter(ab=>ab.personId===person.id).length===0 && (
+                      <div style={{color:"#334155",textAlign:"center",padding:"12px 0",fontSize:12}}>Sin ausencias registradas</div>
+                    )}
+                    {(absences||[]).filter(ab=>ab.personId===person.id).map((ab,ai)=>{
+                      const hasConflict=ab.inicio&&ab.fin&&asgns.some(a=>{
+                        const proj=projects.find(p=>p.id===a.projectId);
+                        if(!proj) return false;
+                        const iniP=a.fechaIni||proj.inicio; const finP=a.fechaFin||proj.fin;
+                        if(!iniP||!finP) return false;
+                        return parseD(iniP)<=parseD(ab.fin)&&parseD(finP)>=parseD(ab.inicio);
+                      });
+                      const abColor=ab.tipo==="Vacaciones"?"#f59e0b":ab.tipo==="Baja"?"#ef4444":"#a78bfa";
+                      return (
+                        <div key={ab.id||ai} style={{display:"grid",gridTemplateColumns:"auto 1fr 1fr auto auto",gap:8,alignItems:"center",padding:"8px 10px",marginBottom:6,borderRadius:8,background:"#0f172a",border:"1px solid "+(hasConflict?"#ef4444":"#1e3a5f")}}>
+                          <select value={ab.tipo||"Vacaciones"} onChange={e=>update({absences:(absences||[]).map(x=>x.id===ab.id?{...x,tipo:e.target.value}:x)})}
+                            style={{background:"#1e293b",border:"1px solid #334155",borderRadius:6,padding:"4px 8px",color:abColor,fontSize:11,fontWeight:700,cursor:"pointer",outline:"none"}}>
+                            <option value="Vacaciones">🟡 Vacaciones</option>
+                            <option value="Baja">🔴 Baja</option>
+                            <option value="Permiso">🟣 Permiso</option>
+                          </select>
+                          <div>
+                            <div style={{fontSize:9,color:"#475569",marginBottom:2}}>INICIO</div>
+                            <input type="date" value={ab.inicio||""} onChange={e=>update({absences:(absences||[]).map(x=>x.id===ab.id?{...x,inicio:e.target.value}:x)})} style={{background:"#1e293b",border:"1px solid #334155",borderRadius:6,padding:"4px 8px",color:"#e2e8f0",fontSize:12,outline:"none",width:"100%"}}/>
+                          </div>
+                          <div>
+                            <div style={{fontSize:9,color:"#475569",marginBottom:2}}>FIN</div>
+                            <input type="date" value={ab.fin||""} onChange={e=>update({absences:(absences||[]).map(x=>x.id===ab.id?{...x,fin:e.target.value}:x)})} style={{background:"#1e293b",border:"1px solid #334155",borderRadius:6,padding:"4px 8px",color:"#e2e8f0",fontSize:12,outline:"none",width:"100%"}}/>
+                          </div>
+                          {hasConflict?<span style={{fontSize:10,fontWeight:700,color:"#ef4444",whiteSpace:"nowrap"}}>⚠ Conflicto</span>:<span/>}
+                          <button onClick={()=>update({absences:(absences||[]).filter(x=>x.id!==ab.id)})} style={{border:"none",background:"none",color:"#ef4444",cursor:"pointer",fontSize:16,fontWeight:700,padding:"0 4px"}}>×</button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               );
             })()}
 
             {/* PEOPLE CARDS */}
-            {peopleView==="cards" && filteredPeople.map(person => {
-              const asgns = asgnByPerson(person.id);
-              const totalAsig = asgns.reduce((s,a) => s+a.horas, 0);
-              const totalReal = asgns.reduce((s,a) => s+(a.horasReales||0), 0);
-              const cargaPct = Math.round(totalAsig/MAX_H*100);
-              const sc = statusColor(person.status);
-              const sel = selPerson && selPerson.id===person.id;
-              const swC = person.software==="Revit"?"#3b82f6":person.software==="Civil 3D"?"#f59e0b":"#22c55e";
+            {peopleView==="cards" && filteredPeople.map(person=>{
+              const asgns=asgnByPerson(person.id);
+              const totalAsig=asgns.reduce((s,a)=>s+a.horas,0);
+              const totalReal=asgns.reduce((s,a)=>s+(a.horasReales||0),0);
+              const cargaPct=Math.round(totalAsig/MAX_H*100);
+              const sc=statusColor(person.status);
+              const sel=selPerson&&selPerson.id===person.id;
+              const swC=person.software==="Revit"?"#3b82f6":person.software==="Civil 3D"?"#f59e0b":"#22c55e";
               return (
                 <div key={person.id} style={S.card(sel)}>
-                  <div style={{padding:"13px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}} onClick={() => setSelPerson(sel?null:person)}>
+                  <div style={{padding:"13px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}} onClick={()=>setSelPerson(sel?null:person)}>
                     <div style={{display:"flex",alignItems:"center",gap:10,flex:1}}>
                       <div style={{position:"relative"}}>
                         <Avatar name={person.name} status={person.status}/>
@@ -2400,7 +2608,7 @@ function App() {
                       </div>
                       <div>
                         <div style={{fontSize:13,fontWeight:700,color:"#f1f5f9"}}>{person.name}</div>
-                        <div style={{fontSize:11,color:"#64748b"}}>{person.perfil} · {person.ubicacion}</div>
+                        <div style={{fontSize:11,color:"#64748b"}}>{person.perfil} · {person.ubicacion} · <span style={{color:"#f59e0b"}}>{person.horasDia||8}h/día</span></div>
                       </div>
                     </div>
                     <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
@@ -2413,7 +2621,7 @@ function App() {
                       </div>
                       <Bar pct={cargaPct} width={72}/>
                       <span style={{fontSize:11,fontWeight:600,width:34,textAlign:"right",color:progressColor(cargaPct)}}>{cargaPct}%</span>
-                      <button style={{...S.btn("ghost"),padding:"4px 6px",fontSize:11,color:"#94a3b8"}} onClick={e => { e.stopPropagation(); openEditPerson(person); }}>✏️</button>
+                      <button style={{...S.btn("ghost"),padding:"4px 6px",fontSize:11,color:"#94a3b8"}} onClick={e=>{e.stopPropagation();openEditPerson(person);}}>✏️</button>
                     </div>
                   </div>
                 </div>
@@ -2423,32 +2631,32 @@ function App() {
             {/* PEOPLE TABLE */}
             {peopleView==="table" && filteredPeople.length>0 && (
               <div style={{background:"#1e293b",border:"1px solid #1e3a5f",borderRadius:12,overflow:"auto"}}>
-                <table style={{width:"100%",borderCollapse:"collapse",minWidth:800}}>
+                <table style={{width:"100%",borderCollapse:"collapse",minWidth:820}}>
                   <thead>
                     <tr style={{background:"#0f172a"}}>
                       <th style={{padding:"10px 12px",width:36}}>
-                        <input type="checkbox" checked={selPersonIds.size===filteredPeople.length && filteredPeople.length>0} onChange={toggleAllPeople} style={{cursor:"pointer",width:14,height:14,accentColor:"#3b82f6"}}/>
+                        <input type="checkbox" checked={selPersonIds.size===filteredPeople.length&&filteredPeople.length>0} onChange={toggleAllPeople} style={{cursor:"pointer",width:14,height:14,accentColor:"#3b82f6"}}/>
                       </th>
-                      {["Nombre","Perfil","Ubicación","Software","Estado","Proy.","H.Asig.","H.Reales","Carga",""].map(h => (
+                      {["Nombre","Perfil","Ubicación","Software","Jornada","Estado","Proy.","H.Asig.","H.Reales","Carga",""].map(h=>(
                         <th key={h} style={{padding:"8px 10px",fontSize:9,fontWeight:700,color:"#475569",textTransform:"uppercase",letterSpacing:"0.4px",whiteSpace:"nowrap",textAlign:"left"}}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredPeople.map((person, i) => {
-                      const asgns = asgnByPerson(person.id);
-                      const totalAsig = asgns.reduce((s,a) => s+a.horas, 0);
-                      const totalReal = asgns.reduce((s,a) => s+(a.horasReales||0), 0);
-                      const cargaPct = Math.round(totalAsig/MAX_H*100);
-                      const col = progressColor(cargaPct);
-                      const swC = person.software==="Revit"?"#3b82f6":person.software==="Civil 3D"?"#f59e0b":"#22c55e";
-                      const cs = {padding:"7px 10px",fontSize:11,borderBottom:"1px solid #0f172a",color:"#e2e8f0",verticalAlign:"middle"};
-                      const selP = selPersonIds.has(person.id);
-                      const sc = statusColor(person.status);
+                    {filteredPeople.map((person,i)=>{
+                      const asgns=asgnByPerson(person.id);
+                      const totalAsig=asgns.reduce((s,a)=>s+a.horas,0);
+                      const totalReal=asgns.reduce((s,a)=>s+(a.horasReales||0),0);
+                      const cargaPct=Math.round(totalAsig/MAX_H*100);
+                      const col=progressColor(cargaPct);
+                      const swC=person.software==="Revit"?"#3b82f6":person.software==="Civil 3D"?"#f59e0b":"#22c55e";
+                      const cs={padding:"7px 10px",fontSize:11,borderBottom:"1px solid #0f172a",color:"#e2e8f0",verticalAlign:"middle"};
+                      const selP=selPersonIds.has(person.id);
+                      const sc=statusColor(person.status);
                       return (
                         <tr key={person.id} style={{background:selP?"#1e3a8a30":i%2===0?"#1e293b":"#162032"}}>
                           <td style={{...cs,textAlign:"center"}}>
-                            <input type="checkbox" checked={selP} onChange={() => togglePersonSel(person.id)} style={{cursor:"pointer",width:13,height:13,accentColor:"#3b82f6"}}/>
+                            <input type="checkbox" checked={selP} onChange={()=>togglePersonSel(person.id)} style={{cursor:"pointer",width:13,height:13,accentColor:"#3b82f6"}}/>
                           </td>
                           <td style={cs}>
                             <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -2459,6 +2667,7 @@ function App() {
                           <td style={{...cs,color:"#94a3b8"}}>{person.perfil}</td>
                           <td style={{...cs,color:"#64748b"}}>{person.ubicacion}</td>
                           <td style={cs}><span style={{background:swC+"20",color:swC,fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:20}}>{person.software}</span></td>
+                          <td style={{...cs,textAlign:"center",color:"#f59e0b",fontWeight:700}}>{person.horasDia||8}h/día</td>
                           <td style={cs}><span style={{background:sc.bg,color:sc.text,fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:20}}>{person.status}</span></td>
                           <td style={{...cs,textAlign:"center",color:"#94a3b8"}}>{asgns.length}</td>
                           <td style={{...cs,textAlign:"right",fontWeight:700}}>{totalAsig}h</td>
@@ -2472,8 +2681,8 @@ function App() {
                             </div>
                           </td>
                           <td style={{...cs,whiteSpace:"nowrap"}}>
-                            <button onClick={() => openEditPerson(person)} style={{border:"none",background:"#1e3a5f",color:"#94a3b8",borderRadius:6,padding:"3px 8px",fontSize:11,cursor:"pointer",marginRight:4}}>✏️</button>
-                            <button onClick={() => { if(window.confirm("¿Eliminar a "+person.name+"?")) { update({people:people.filter(p=>p.id!==person.id),assignments:assignments.filter(a=>a.personId!==person.id)}); showToast("Eliminada"); } }} style={{border:"none",background:"#ef444420",color:"#ef4444",borderRadius:6,padding:"3px 8px",fontSize:11,cursor:"pointer"}}>🗑️</button>
+                            <button onClick={()=>openEditPerson(person)} style={{border:"none",background:"#1e3a5f",color:"#94a3b8",borderRadius:6,padding:"3px 8px",fontSize:11,cursor:"pointer",marginRight:4}}>✏️</button>
+                            <button onClick={()=>{if(window.confirm("¿Eliminar a "+person.name+"?")){update({people:people.filter(p=>p.id!==person.id),assignments:assignments.filter(a=>a.personId!==person.id)});showToast("Eliminada");}}} style={{border:"none",background:"#ef444420",color:"#ef4444",borderRadius:6,padding:"3px 8px",fontSize:11,cursor:"pointer"}}>🗑️</button>
                           </td>
                         </tr>
                       );
@@ -2482,7 +2691,6 @@ function App() {
                 </table>
                 <div style={{padding:"10px 16px",fontSize:11,color:"#475569",borderTop:"1px solid #0f172a",display:"flex",justifyContent:"space-between"}}>
                   <span>{filteredPeople.length} personas · {selPersonIds.size} seleccionadas</span>
-                  <span style={{color:"#334155"}}>Usa ✏️ para editar</span>
                 </div>
               </div>
             )}
@@ -2491,44 +2699,44 @@ function App() {
 
         {/* ASSIGNMENT MODAL */}
         {modal && (
-          <div style={S.mover} onClick={e => e.target===e.currentTarget && setModal(null)}>
+          <div style={S.mover} onClick={e=>e.target===e.currentTarget&&setModal(null)}>
             <div style={S.mbox}>
               <div style={{fontSize:16,fontWeight:700,color:"#f1f5f9",marginBottom:4}}>
-                {modal.type==="to-project" ? "Asignar persona al proyecto" : "Asignar proyecto a la persona"}
+                {modal.type==="to-project"?"Asignar persona al proyecto":"Asignar proyecto a la persona"}
               </div>
-              <div style={{fontSize:12,color:"#64748b",marginBottom:20}}>
-                {modal.type==="to-project" ? projects.find(p=>p.id===modal.projectId)?.name : people.find(p=>p.id===modal.personId)?.name}
+              <div style={{fontSize:12,color:"#64748b",marginBottom:16}}>
+                {modal.type==="to-project"?projects.find(p=>p.id===modal.projectId)?.name:people.find(p=>p.id===modal.personId)?.name}
               </div>
               {modal.type==="to-project" ? (
                 <div>
                   <label style={S.lbl}>Persona</label>
-                  <select value={mPersonId} onChange={e => { setMPersonId(e.target.value); const p=people.find(x=>x.id===e.target.value); if(p && p.software) setMSoftware(p.software==="Ambos"?"Revit":p.software); }} style={S.sel}>
+                  <select value={mPersonId} onChange={e=>{setMPersonId(e.target.value);const p=people.find(x=>x.id===e.target.value);if(p&&p.software)setMSoftware(p.software==="Ambos"?"Revit":p.software);if(mFechaIni&&mFechaFin){const hd=p?p.horasDia||8:8;setMHorasCalc(calcHoras(mFechaIni,mFechaFin,mPct,hd));setMHoras(String(calcHoras(mFechaIni,mFechaFin,mPct,hd)));}}} style={S.sel}>
                     <option value="">— Seleccionar —</option>
-                    {people.filter(p => p.status!=="Baja médica").map(p => (
-                      <option key={p.id} value={p.id}>{p.name} ({p.perfil} · {p.software||"Revit"})</option>
+                    {people.filter(p=>p.status!=="Baja médica").map(p=>(
+                      <option key={p.id} value={p.id}>{p.name} ({p.perfil} · {p.software||"Revit"} · {p.horasDia||8}h/día)</option>
                     ))}
                   </select>
                 </div>
               ) : (
                 <div>
                   <label style={S.lbl}>Proyecto</label>
-                  <select value={mProjectId} onChange={e => setMProjectId(e.target.value)} style={S.sel}>
+                  <select value={mProjectId} onChange={e=>{setMProjectId(e.target.value);const proj=projects.find(x=>x.id===e.target.value);if(proj){setMFechaIni(mFechaIni||proj.inicio||"");setMFechaFin(mFechaFin||proj.fin||"");}}} style={S.sel}>
                     <option value="">— Seleccionar —</option>
-                    {projects.map(p => <option key={p.id} value={p.id}>{p.name} ({p.client})</option>)}
+                    {projects.map(p=><option key={p.id} value={p.id}>{p.name} ({p.client})</option>)}
                   </select>
                 </div>
               )}
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:14}}>
                 <div>
                   <label style={S.lbl}>Rol</label>
-                  <select value={mRol} onChange={e => setMRol(e.target.value)} style={S.sel}>
+                  <select value={mRol} onChange={e=>setMRol(e.target.value)} style={S.sel}>
                     <option value="Modelado">🟦 Modelado</option>
                     <option value="Coordinación">🟣 Coordinación</option>
                   </select>
                 </div>
                 <div>
                   <label style={S.lbl}>Software</label>
-                  <select value={mSoftware} onChange={e => setMSoftware(e.target.value)} style={S.sel}>
+                  <select value={mSoftware} onChange={e=>setMSoftware(e.target.value)} style={S.sel}>
                     <option value="Revit">Revit</option>
                     <option value="Civil 3D">Civil 3D</option>
                     <option value="Navisworks">Navisworks</option>
@@ -2536,12 +2744,37 @@ function App() {
                   </select>
                 </div>
               </div>
-              <div style={{marginTop:14}}>
-                <label style={S.lbl}>Horas asignadas</label>
-                <input type="number" value={mHoras} onChange={e => setMHoras(e.target.value)} onKeyDown={e => e.key==="Enter" && addAssignment()} placeholder="ej. 80" style={S.inp}/>
+              <div style={{background:"#0f172a",borderRadius:10,padding:"14px 16px",marginTop:16,border:"1px solid #1e3a5f"}}>
+                <div style={{fontSize:11,fontWeight:700,color:"#3b82f6",textTransform:"uppercase",letterSpacing:"0.5px",marginBottom:12}}>⚙️ Disponibilidad en este proyecto</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                  <div>
+                    <label style={S.lbl}>Fecha inicio en proyecto</label>
+                    <input type="date" value={mFechaIni} onChange={e=>{setMFechaIni(e.target.value);recalcModal(e.target.value,mFechaFin,mPct,mPersonId||modal.personId);}} style={{...S.inp,marginTop:4}}/>
+                  </div>
+                  <div>
+                    <label style={S.lbl}>Fecha fin en proyecto</label>
+                    <input type="date" value={mFechaFin} onChange={e=>{setMFechaFin(e.target.value);recalcModal(mFechaIni,e.target.value,mPct,mPersonId||modal.personId);}} style={{...S.inp,marginTop:4}}/>
+                  </div>
+                </div>
+                <div style={{marginTop:10}}>
+                  <label style={S.lbl}>% Dedicación — {mPct}%</label>
+                  <input type="range" min="10" max="100" step="5" value={mPct} onChange={e=>{setMPct(Number(e.target.value));recalcModal(mFechaIni,mFechaFin,Number(e.target.value),mPersonId||modal.personId);}} style={{width:"100%",accentColor:"#3b82f6",marginTop:4}}/>
+                  <div style={{display:"flex",justifyContent:"space-between",fontSize:9,color:"#475569",marginTop:2}}>
+                    <span>10%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
+                  </div>
+                </div>
+                {mHorasCalc>0 && (
+                  <div style={{marginTop:10,padding:"8px 12px",background:"#3b82f620",borderRadius:8,border:"1px solid #3b82f640",fontSize:12,color:"#3b82f6",fontWeight:700,textAlign:"center"}}>
+                    ⚡ Horas calculadas: {mHorasCalc}h ({workingDays(mFechaIni,mFechaFin)} días laborables × {getPersonHorasDia(mPersonId||modal.personId)}h/día × {mPct}%)
+                  </div>
+                )}
               </div>
-              <div style={{display:"flex",gap:8,marginTop:24,justifyContent:"flex-end"}}>
-                <button style={S.btn("default")} onClick={() => setModal(null)}>Cancelar</button>
+              <div style={{marginTop:12}}>
+                <label style={S.lbl}>Horas asignadas {mHorasCalc>0?"(calculadas automáticamente, puedes ajustar)":""}</label>
+                <input type="number" value={mHoras} onChange={e=>setMHoras(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addAssignment()} placeholder="ej. 80" style={S.inp}/>
+              </div>
+              <div style={{display:"flex",gap:8,marginTop:20,justifyContent:"flex-end"}}>
+                <button style={S.btn("default")} onClick={()=>setModal(null)}>Cancelar</button>
                 <button style={S.btn("primary")} onClick={addAssignment}>Guardar asignación</button>
               </div>
             </div>
@@ -2550,19 +2783,19 @@ function App() {
 
         {/* DATE MODAL */}
         {dateModal && (
-          <div style={S.mover} onClick={e => e.target===e.currentTarget && setDateModal(null)}>
+          <div style={S.mover} onClick={e=>e.target===e.currentTarget&&setDateModal(null)}>
             <div style={S.mbox}>
               <div style={{fontSize:16,fontWeight:700,color:"#f1f5f9",marginBottom:20}}>
                 Editar fechas — {projects.find(p=>p.id===dateModal.projectId)?.name}
               </div>
-              {[{label:"Fecha inicio",val:dInicio,set:setDInicio},{label:"Fecha fin (estimada)",val:dFin,set:setDFin},{label:"Fecha entrega",val:dEntrega,set:setDEntrega}].map(f => (
+              {[{label:"Fecha inicio",val:dInicio,set:setDInicio},{label:"Fecha fin (estimada)",val:dFin,set:setDFin},{label:"Fecha entrega",val:dEntrega,set:setDEntrega}].map(f=>(
                 <div key={f.label} style={{marginTop:12}}>
                   <label style={S.lbl}>{f.label}</label>
-                  <input type="date" value={f.val} onChange={e => f.set(e.target.value)} style={S.inp}/>
+                  <input type="date" value={f.val} onChange={e=>f.set(e.target.value)} style={S.inp}/>
                 </div>
               ))}
               <div style={{display:"flex",gap:8,marginTop:24,justifyContent:"flex-end"}}>
-                <button style={S.btn("default")} onClick={() => setDateModal(null)}>Cancelar</button>
+                <button style={S.btn("default")} onClick={()=>setDateModal(null)}>Cancelar</button>
                 <button style={S.btn("primary")} onClick={saveDates}>Guardar fechas</button>
               </div>
             </div>
@@ -2571,40 +2804,62 @@ function App() {
 
         {/* PROJECT FORM MODAL */}
         {projFormModal && (
-          <div style={S.mover} onClick={e => e.target===e.currentTarget && setProjFormModal(null)}>
+          <div style={S.mover} onClick={e=>e.target===e.currentTarget&&setProjFormModal(null)}>
             <div style={S.mbox}>
               <div style={{fontSize:16,fontWeight:700,color:"#f1f5f9",marginBottom:20}}>
-                {projFormModal.mode==="new" ? "Nuevo proyecto" : "Editar proyecto"}
+                {projFormModal.mode==="new"?"Nuevo proyecto":"Editar proyecto"}
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-                {[{label:"Nombre del proyecto",field:"name",type:"text",span:2},{label:"Cliente",field:"client",type:"text"},{label:"Código BIM",field:"bimId",type:"text"},{label:"H. Oferta total",field:"horasOferta",type:"number"},{label:"H. Consumidas",field:"horasConsumidas",type:"number"},{label:"H. Oferta MOD",field:"horasOfertaMod",type:"number"},{label:"H. Oferta COO",field:"horasOfertaCoo",type:"number"},{label:"H. Cons. MOD",field:"horasConsMod",type:"number"},{label:"H. Cons. COO",field:"horasConsCoo",type:"number"},{label:"Fecha inicio",field:"inicio",type:"date"},{label:"Fecha fin",field:"fin",type:"date"},{label:"Fecha entrega",field:"entrega",type:"date",span:2}].map(f => (
+                {[{label:"Nombre del proyecto",field:"name",type:"text",span:2},{label:"Cliente",field:"client",type:"text"},{label:"Código BIM",field:"bimId",type:"text"},{label:"H. Oferta total",field:"horasOferta",type:"number"},{label:"H. Consumidas",field:"horasConsumidas",type:"number"},{label:"H. Oferta MOD",field:"horasOfertaMod",type:"number"},{label:"H. Oferta COO",field:"horasOfertaCoo",type:"number"},{label:"H. Cons. MOD",field:"horasConsMod",type:"number"},{label:"H. Cons. COO",field:"horasConsCoo",type:"number"},{label:"Fecha inicio",field:"inicio",type:"date"},{label:"Fecha fin",field:"fin",type:"date"},{label:"Fecha entrega",field:"entrega",type:"date",span:2}].map(f=>(
                   <div key={f.field} style={{gridColumn:f.span===2?"span 2":"auto"}}>
                     <label style={S.lbl}>{f.label}</label>
-                    <input type={f.type} value={projFormModal.data[f.field]||""} onChange={e => setProjFormModal(m => ({...m, data:{...m.data, [f.field]:e.target.value}}))} style={S.inp}/>
+                    <input type={f.type} value={projFormModal.data[f.field]||""} onChange={e=>setProjFormModal(m=>({...m,data:{...m.data,[f.field]:e.target.value}}))} style={S.inp}/>
                   </div>
                 ))}
                 <div>
                   <label style={S.lbl}>Tipo</label>
-                  <select value={projFormModal.data.tipo||"MOD"} onChange={e => setProjFormModal(m => ({...m, data:{...m.data, tipo:e.target.value}}))} style={S.sel}>
-                    {["MOD","COO","BEP","AT"].map(t => <option key={t}>{t}</option>)}
+                  <select value={projFormModal.data.tipo||"MOD"} onChange={e=>setProjFormModal(m=>({...m,data:{...m.data,tipo:e.target.value}}))} style={S.sel}>
+                    {["MOD","COO","BEP","AT"].map(t=><option key={t}>{t}</option>)}
                   </select>
                 </div>
                 <div>
                   <label style={S.lbl}>Estado</label>
-                  <select value={projFormModal.data.status||"Inicio"} onChange={e => setProjFormModal(m => ({...m, data:{...m.data, status:e.target.value}}))} style={S.sel}>
-                    {["En curso","Inicio","En espera","Cerrado"].map(s => <option key={s}>{s}</option>)}
+                  <select value={projFormModal.data.status||"Inicio"} onChange={e=>setProjFormModal(m=>({...m,data:{...m.data,status:e.target.value}}))} style={S.sel}>
+                    {["En curso","Inicio","En espera","Cerrado"].map(s=><option key={s}>{s}</option>)}
                   </select>
                 </div>
               </div>
+
+              {/* HITOS EDITOR */}
+              <div style={{marginTop:20,paddingTop:16,borderTop:"1px solid #1e3a5f"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                  <div style={{fontSize:11,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"0.5px"}}>◆ Hitos de entrega</div>
+                  <button type="button" onClick={()=>setProjFormModal(m=>({...m,data:{...m.data,hitos:[...(m.data.hitos||[]),{n:"",fecha:"",ok:false}]}}))}
+                    style={{border:"none",borderRadius:6,background:"#3b82f620",color:"#3b82f6",padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer"}}>+ Añadir hito</button>
+                </div>
+                {(projFormModal.data.hitos||[]).length===0 && (
+                  <div style={{fontSize:11,color:"#334155",textAlign:"center",padding:"8px 0"}}>Sin hitos. Pulsa + para añadir.</div>
+                )}
+                {(projFormModal.data.hitos||[]).map((h,hi)=>(
+                  <div key={hi} style={{display:"grid",gridTemplateColumns:"auto 1fr auto auto",gap:8,alignItems:"center",marginBottom:8,padding:"8px 10px",background:"#0f172a",borderRadius:8,border:"1px solid "+(h.ok?"#22c55e30":"#1e3a5f")}}>
+                    <input type="checkbox" checked={h.ok||false} onChange={e=>setProjFormModal(m=>({...m,data:{...m.data,hitos:m.data.hitos.map((x,j)=>j===hi?{...x,ok:e.target.checked}:x)}}))} style={{width:16,height:16,accentColor:"#22c55e",cursor:"pointer"}}/>
+                    <div style={{display:"flex",gap:8}}>
+                      <input type="text" value={h.n||""} placeholder="Nombre del hito…" onChange={e=>setProjFormModal(m=>({...m,data:{...m.data,hitos:m.data.hitos.map((x,j)=>j===hi?{...x,n:e.target.value}:x)}}))} style={{...S.inp,marginTop:0,flex:2,padding:"5px 8px",fontSize:12}}/>
+                      <input type="date" value={h.fecha||""} onChange={e=>setProjFormModal(m=>({...m,data:{...m.data,hitos:m.data.hitos.map((x,j)=>j===hi?{...x,fecha:e.target.value}:x)}}))} style={{...S.inp,marginTop:0,flex:1,padding:"5px 8px",fontSize:11}}/>
+                    </div>
+                    <span style={{fontSize:10,color:h.ok?"#22c55e":"#64748b",fontWeight:700,whiteSpace:"nowrap"}}>{h.ok?"✅ OK":"⏳ Pend."}</span>
+                    <button type="button" onClick={()=>setProjFormModal(m=>({...m,data:{...m.data,hitos:m.data.hitos.filter((_,j)=>j!==hi)}}))} style={{border:"none",background:"none",color:"#ef4444",cursor:"pointer",fontSize:16,fontWeight:700}}>×</button>
+                  </div>
+                ))}
+              </div>
+
               <div style={{display:"flex",gap:8,marginTop:24,justifyContent:"space-between",alignItems:"center"}}>
-                {projFormModal.mode==="edit" ? (
-                  <button style={S.btn("danger")} onClick={() => { if(window.confirm("¿Eliminar este proyecto?")) { update({projects:projects.filter(p=>p.id!==projFormModal.data.id),assignments:assignments.filter(a=>a.projectId!==projFormModal.data.id)}); if(selProject && selProject.id===projFormModal.data.id) setSelProject(null); setProjFormModal(null); showToast("Eliminado"); } }}>Eliminar</button>
-                ) : <div/>}
+                {projFormModal.mode==="edit"?(
+                  <button style={S.btn("danger")} onClick={()=>{if(window.confirm("¿Eliminar este proyecto?")){update({projects:projects.filter(p=>p.id!==projFormModal.data.id),assignments:assignments.filter(a=>a.projectId!==projFormModal.data.id)});if(selProject&&selProject.id===projFormModal.data.id)setSelProject(null);setProjFormModal(null);showToast("Eliminado");}}}>Eliminar</button>
+                ):<div/>}
                 <div style={{display:"flex",gap:8}}>
-                  <button style={S.btn("default")} onClick={() => setProjFormModal(null)}>Cancelar</button>
-                  <button style={S.btn("primary")} onClick={saveProjForm}>
-                    {projFormModal.mode==="new" ? "Crear proyecto" : "Guardar cambios"}
-                  </button>
+                  <button style={S.btn("default")} onClick={()=>setProjFormModal(null)}>Cancelar</button>
+                  <button style={S.btn("primary")} onClick={saveProjForm}>{projFormModal.mode==="new"?"Crear proyecto":"Guardar cambios"}</button>
                 </div>
               </div>
             </div>
@@ -2613,38 +2868,47 @@ function App() {
 
         {/* PERSON FORM MODAL */}
         {personFormModal && (
-          <div style={S.mover} onClick={e => e.target===e.currentTarget && setPersonFormModal(null)}>
+          <div style={S.mover} onClick={e=>e.target===e.currentTarget&&setPersonFormModal(null)}>
             <div style={S.mbox}>
               <div style={{fontSize:16,fontWeight:700,color:"#f1f5f9",marginBottom:20}}>
-                {personFormModal.mode==="new" ? "Nueva persona" : "Editar persona"}
+                {personFormModal.mode==="new"?"Nueva persona":"Editar persona"}
               </div>
-              {[{label:"Nombre completo",field:"name",type:"text"},{label:"Perfil / Rol",field:"perfil",type:"text"},{label:"Ubicación",field:"ubicacion",type:"text"}].map(f => (
+              {[{label:"Nombre completo",field:"name",type:"text"},{label:"Perfil / Rol",field:"perfil",type:"text"},{label:"Ubicación",field:"ubicacion",type:"text"}].map(f=>(
                 <div key={f.field} style={{marginTop:12}}>
                   <label style={S.lbl}>{f.label}</label>
-                  <input type={f.type} value={personFormModal.data[f.field]||""} onChange={e => setPersonFormModal(m => ({...m, data:{...m.data, [f.field]:e.target.value}}))} style={S.inp}/>
+                  <input type={f.type} value={personFormModal.data[f.field]||""} onChange={e=>setPersonFormModal(m=>({...m,data:{...m.data,[f.field]:e.target.value}}))} style={S.inp}/>
                 </div>
               ))}
-              <div style={{marginTop:12}}>
-                <label style={S.lbl}>Software principal</label>
-                <select value={personFormModal.data.software||"Revit"} onChange={e => setPersonFormModal(m => ({...m, data:{...m.data, software:e.target.value}}))} style={S.sel}>
-                  {["Revit","Civil 3D","Ambos"].map(s => <option key={s}>{s}</option>)}
-                </select>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:12}}>
+                <div>
+                  <label style={S.lbl}>Software principal</label>
+                  <select value={personFormModal.data.software||"Revit"} onChange={e=>setPersonFormModal(m=>({...m,data:{...m.data,software:e.target.value}}))} style={S.sel}>
+                    {["Revit","Civil 3D","Ambos"].map(s=><option key={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={S.lbl}>Estado</label>
+                  <select value={personFormModal.data.status||"Activo"} onChange={e=>setPersonFormModal(m=>({...m,data:{...m.data,status:e.target.value}}))} style={S.sel}>
+                    {["Activo","Activa","Remota","Baja médica","Sin asignar"].map(s=><option key={s}>{s}</option>)}
+                  </select>
+                </div>
               </div>
               <div style={{marginTop:12}}>
-                <label style={S.lbl}>Estado</label>
-                <select value={personFormModal.data.status||"Activo"} onChange={e => setPersonFormModal(m => ({...m, data:{...m.data, status:e.target.value}}))} style={S.sel}>
-                  {["Activo","Activa","Remota","Baja médica","Sin asignar"].map(s => <option key={s}>{s}</option>)}
-                </select>
+                <label style={S.lbl}>Jornada diaria (horas/día) — <span style={{color:"#f59e0b",fontWeight:800}}>{personFormModal.data.horasDia||8}h</span></label>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginTop:6}}>
+                  <input type="range" min="1" max="12" step="0.5" value={personFormModal.data.horasDia||8} onChange={e=>setPersonFormModal(m=>({...m,data:{...m.data,horasDia:Number(e.target.value)}}))} style={{flex:1,accentColor:"#f59e0b"}}/>
+                  <input type="number" min="1" max="12" step="0.5" value={personFormModal.data.horasDia||8} onChange={e=>setPersonFormModal(m=>({...m,data:{...m.data,horasDia:Number(e.target.value)}}))} style={{...S.inp,width:70,marginTop:0,padding:"5px 8px",textAlign:"center",fontWeight:700,color:"#f59e0b"}}/>
+                  <span style={{fontSize:11,color:"#475569"}}>h/día</span>
+                </div>
+                <div style={{fontSize:10,color:"#475569",marginTop:4}}>Usado para calcular horas automáticamente al asignar por fechas</div>
               </div>
               <div style={{display:"flex",gap:8,marginTop:24,justifyContent:"space-between",alignItems:"center"}}>
-                {personFormModal.mode==="edit" ? (
-                  <button style={S.btn("danger")} onClick={() => { if(window.confirm("¿Eliminar a "+personFormModal.data.name+"?")) { update({people:people.filter(p=>p.id!==personFormModal.data.id),assignments:assignments.filter(a=>a.personId!==personFormModal.data.id)}); if(selPerson && selPerson.id===personFormModal.data.id) setSelPerson(null); setPersonFormModal(null); showToast("Eliminada"); } }}>Eliminar</button>
-                ) : <div/>}
+                {personFormModal.mode==="edit"?(
+                  <button style={S.btn("danger")} onClick={()=>{if(window.confirm("¿Eliminar a "+personFormModal.data.name+"?")){update({people:people.filter(p=>p.id!==personFormModal.data.id),assignments:assignments.filter(a=>a.personId!==personFormModal.data.id)});if(selPerson&&selPerson.id===personFormModal.data.id)setSelPerson(null);setPersonFormModal(null);showToast("Eliminada");}}}>Eliminar</button>
+                ):<div/>}
                 <div style={{display:"flex",gap:8}}>
-                  <button style={S.btn("default")} onClick={() => setPersonFormModal(null)}>Cancelar</button>
-                  <button style={S.btn("primary")} onClick={savePersonForm}>
-                    {personFormModal.mode==="new" ? "Añadir persona" : "Guardar cambios"}
-                  </button>
+                  <button style={S.btn("default")} onClick={()=>setPersonFormModal(null)}>Cancelar</button>
+                  <button style={S.btn("primary")} onClick={savePersonForm}>{personFormModal.mode==="new"?"Añadir persona":"Guardar cambios"}</button>
                 </div>
               </div>
             </div>
