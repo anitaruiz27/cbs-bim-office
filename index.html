@@ -7,6 +7,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
   *{box-sizing:border-box;margin:0;padding:0}
@@ -1762,6 +1763,99 @@ function calcHoras(fechaIni, fechaFin, pct, horasDia) {
   return Math.round(days * hd * p / 100);
 }
 
+function parseFechaExcel(v) {
+  if (!v) return "";
+  if (typeof v === "number") {
+    var d = new Date(Math.round((v - 25569) * 86400 * 1000));
+    return d.toISOString().slice(0, 10);
+  }
+  var s = String(v).trim();
+  var m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if (m) {
+    var yr = m[3].length === 2 ? "20" + m[3] : m[3];
+    return yr + "-" + m[2].padStart(2,"0") + "-" + m[1].padStart(2,"0");
+  }
+  return s;
+}
+
+function parsearExcel(arrayBuffer) {
+  var XLSX = window.XLSX;
+  if (!XLSX) throw new Error("Librería Excel no cargada. Recarga la página.");
+  var wb = XLSX.read(arrayBuffer, { type: "array" });
+
+  function toRows(name) {
+    var ws = wb.Sheets[name];
+    if (!ws) return [];
+    return XLSX.utils.sheet_to_json(ws, { defval: "" });
+  }
+
+  var pRows  = toRows("projects");
+  var peRows = toRows("people");
+  var aRows  = toRows("assignments");
+  var abRows = toRows("absences");
+
+  if (!pRows.length && !peRows.length) {
+    throw new Error("No se encontraron hojas 'projects' o 'people'. Verifica los nombres exactos de las hojas.");
+  }
+
+  var proyectos = pRows.map(function(r) {
+    return {
+      id:              String(r.id || r.ID || "").trim(),
+      name:            String(r.name || r.nombre || "").trim(),
+      client:          String(r.client || r.cliente || "").trim(),
+      status:          String(r.status || r.estado || "activo").trim(),
+      horasOferta:     Number(r.horasOferta || r.horas_oferta || 0),
+      horasConsumidas: Number(r.horasConsumidas || r.horas_consumidas || 0),
+      horasOfertaMod:  Number(r.horasOfertaMod || 0),
+      horasOfertaCoo:  Number(r.horasOfertaCoo || 0),
+      horasConsMod:    Number(r.horasConsMod || 0),
+      horasConsCoo:    Number(r.horasConsCoo || 0),
+      tipo:            String(r.tipo || "OT").trim(),
+      bimId:           String(r.bimId || r.bim_id || "").trim(),
+      inicio:          parseFechaExcel(r.inicio || r.fechaInicio || r.fecha_inicio),
+      fin:             parseFechaExcel(r.fin || r.fechaFin || r.fecha_fin),
+      entrega:         parseFechaExcel(r.entrega || r.fechaEntrega || r.fecha_entrega),
+      hitos:           [],
+    };
+  }).filter(function(p) { return p.id; });
+
+  var personas = peRows.map(function(r, i) {
+    return {
+      id:       String(r.id || r.ID || ("p" + String(i+1).padStart(2,"0"))).trim(),
+      name:     String(r.name || r.nombre || "").trim(),
+      software: String(r.software || "Revit").trim(),
+      status:   String(r.status || r.estado || "activo").trim(),
+      horasDia: Number(r.horasDia || r.horas_dia || 8),
+    };
+  }).filter(function(p) { return p.name; });
+
+  var asignaciones = aRows.map(function(r) {
+    return {
+      personId:    String(r.personId || r.persona_id || r.persona || "").trim(),
+      projectId:   String(r.projectId || r.proyecto_id || r.proyecto || "").trim(),
+      horas:       Number(r.horas || 0),
+      horasReales: Number(r.horasReales || r.horas_reales || 0),
+      rol:         String(r.rol || "Modelado").trim(),
+      software:    String(r.software || "Revit").trim(),
+      fechaIni:    parseFechaExcel(r.fechaIni || r.fecha_ini || r.fecha_inicio),
+      fechaFin:    parseFechaExcel(r.fechaFin || r.fecha_fin),
+      pct:         r.pct !== "" ? Number(r.pct) : null,
+    };
+  }).filter(function(a) { return a.personId && a.projectId; });
+
+  var ausencias = abRows.map(function(r) {
+    return {
+      id:       String(r.id || String(Date.now()) + "_" + String(Math.random())).trim(),
+      personId: String(r.personId || r.persona_id || "").trim(),
+      tipo:     String(r.tipo || "Vacaciones").trim(),
+      inicio:   parseFechaExcel(r.inicio || r.fechaInicio),
+      fin:      parseFechaExcel(r.fin || r.fechaFin),
+    };
+  }).filter(function(a) { return a.personId; });
+
+  return { projects: proyectos, people: personas, assignments: asignaciones, absences: ausencias };
+}
+
 function App() {
 
   const [data, setData] = useState(() => {
@@ -1826,6 +1920,9 @@ function App() {
   const [peopleView,       setPeopleView]       = useState("cards");
   const [projFormModal,    setProjFormModal]    = useState(null);
   const [personFormModal,  setPersonFormModal]  = useState(null);
+  const [showDataModal,    setShowDataModal]    = useState(false);
+  const [importText,       setImportText]       = useState("");
+  const [importError,      setImportError]      = useState("");
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
 
@@ -2047,11 +2144,16 @@ function App() {
             <div style={{fontSize:10,color:"#64748b",letterSpacing:"0.5px",textTransform:"uppercase"}}>Gestión de proyectos y equipo · 2026</div>
           </div>
         </div>
-        <div style={S.tabs}>
-          <button style={S.tab(view==="projects")} onClick={()=>{setView("projects");setSelProject(null);setSearch("");}}>📋 Proyectos</button>
-          <button style={S.tab(view==="people")}   onClick={()=>{setView("people");setSelPerson(null);setSearch("");}}>👥 Personas</button>
-          <button style={S.tab(view==="calendar")} onClick={()=>{setView("calendar");setSearch("");}}>📅 Calendario</button>
-          <button style={S.tab(view==="report")}   onClick={()=>{setView("report");setSearch("");}}>📊 Informe</button>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <div style={S.tabs}>
+            <button style={S.tab(view==="projects")} onClick={()=>{setView("projects");setSelProject(null);setSearch("");}}>📋 Proyectos</button>
+            <button style={S.tab(view==="people")}   onClick={()=>{setView("people");setSelPerson(null);setSearch("");}}>👥 Personas</button>
+            <button style={S.tab(view==="calendar")} onClick={()=>{setView("calendar");setSearch("");}}>📅 Calendario</button>
+            <button style={S.tab(view==="report")}   onClick={()=>{setView("report");setSearch("");}}>📊 Informe</button>
+          </div>
+          <button onClick={()=>{setShowDataModal(true);setImportText("");setImportError("");}} style={{background:"#1e293b",border:"1px solid #334155",color:"#94a3b8",borderRadius:8,padding:"6px 12px",cursor:"pointer",fontSize:13,fontWeight:600,display:"flex",alignItems:"center",gap:6}} title="Importar / Exportar datos">
+            ⬆️⬇️ Datos
+          </button>
         </div>
       </div>
 
@@ -2911,6 +3013,158 @@ function App() {
                   <button style={S.btn("primary")} onClick={savePersonForm}>{personFormModal.mode==="new"?"Añadir persona":"Guardar cambios"}</button>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL IMPORTAR / EXPORTAR DATOS */}
+        {showDataModal && (
+          <div style={S.mover} onClick={()=>setShowDataModal(false)}>
+            <div style={{...S.mbox,maxWidth:700,width:"96vw"}} onClick={e=>e.stopPropagation()}>
+
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:22}}>
+                <div>
+                  <div style={{fontSize:17,fontWeight:700,color:"#f1f5f9"}}>⬆️⬇️ Importar / Exportar datos</div>
+                  <div style={{fontSize:12,color:"#64748b",marginTop:3}}>Copia de seguridad · JSON · Excel</div>
+                </div>
+                <button onClick={()=>setShowDataModal(false)} style={S.btn("ghost")}>✕</button>
+              </div>
+
+              {/* EXPORTAR */}
+              <div style={{background:"#0f172a",borderRadius:10,padding:16,marginBottom:16,border:"1px solid #1e3a5f"}}>
+                <div style={{fontSize:12,fontWeight:700,color:"#3b82f6",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.5px"}}>📤 Exportar datos actuales</div>
+                <div style={{fontSize:12,color:"#64748b",marginBottom:12}}>Descarga un JSON con todos los proyectos, personas y asignaciones. Úsalo como copia de seguridad o para importar en otro equipo.</div>
+                <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                  <button style={S.btn("primary")} onClick={()=>{
+                    const d={projects,people,assignments,absences,_v:"cbs_bim_2026_v2",_exp:new Date().toISOString()};
+                    const blob=new Blob([JSON.stringify(d,null,2)],{type:"application/json"});
+                    const url=URL.createObjectURL(blob);
+                    const a=document.createElement("a"); a.href=url;
+                    a.download="CBS_BIM_datos_"+new Date().toISOString().slice(0,10)+".json"; a.click();
+                    URL.revokeObjectURL(url); showToast("Datos exportados ✓");
+                  }}>⬇️ Descargar JSON</button>
+                  <button style={S.btn("outline")} onClick={()=>{
+                    const d={projects,people,assignments,absences};
+                    navigator.clipboard.writeText(JSON.stringify(d,null,2))
+                      .then(()=>showToast("JSON copiado ✓")).catch(()=>showToast("No se pudo copiar"));
+                  }}>📋 Copiar JSON</button>
+                  <button style={S.btn("outline")} onClick={()=>{
+                    /* Descargar plantilla Excel vacía con instrucciones */
+                    const lines = [
+                      "=== HOJA: projects ===",
+                      "id\tname\tclient\tstatus\thorasOferta\thorasConsumidas\ttipo\tinicio\tfin\tentrega",
+                      "OT_EJEMPLO\tNombre proyecto\tCliente S.A.\tactivo\t400\t0\tOT\t2026-01-01\t2026-06-30\t2026-06-15",
+                      "",
+                      "=== HOJA: people ===",
+                      "id\tname\tsoftware\tstatus\thorasDia",
+                      "p01\tNombre Apellido\tRevit\tactivo\t8",
+                      "",
+                      "=== HOJA: assignments ===",
+                      "personId\tprojectId\thoras\thorasReales\trol\tsoftware\tfechaIni\tfechaFin\tpct",
+                      "p01\tOT_EJEMPLO\t200\t0\tModelado\tRevit\t2026-01-15\t2026-04-30\t50"
+                    ].join("\n");
+                    const blob=new Blob([lines],{type:"text/plain"});
+                    const url=URL.createObjectURL(blob);
+                    const a=document.createElement("a"); a.href=url;
+                    a.download="CBS_BIM_plantilla.txt"; a.click();
+                    URL.revokeObjectURL(url); showToast("Plantilla descargada ✓");
+                  }}>📄 Plantilla Excel (TXT)</button>
+                </div>
+              </div>
+
+              {/* IMPORTAR */}
+              <div style={{background:"#0f172a",borderRadius:10,padding:16,border:"1px solid #334155"}}>
+                <div style={{fontSize:12,fontWeight:700,color:"#f59e0b",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.5px"}}>📥 Importar datos</div>
+                <div style={{fontSize:12,color:"#64748b",marginBottom:14}}>
+                  Acepta <strong style={{color:"#e2e8f0"}}>.json</strong> (exportado desde esta app) o <strong style={{color:"#e2e8f0"}}>.xlsx / .xls</strong> con 3 hojas: <code style={{color:"#a78bfa"}}>projects</code> · <code style={{color:"#a78bfa"}}>people</code> · <code style={{color:"#a78bfa"}}>assignments</code>.
+                  {" "}<span style={{color:"#ef4444"}}>⚠️ Reemplaza todos los datos actuales.</span>
+                </div>
+
+                {/* Botones de subida */}
+                <div style={{display:"flex",gap:10,marginBottom:14,flexWrap:"wrap"}}>
+                  <label style={{...S.btn("outline"),display:"inline-flex",alignItems:"center",gap:6,cursor:"pointer"}}>
+                    📁 Subir JSON
+                    <input type="file" accept=".json" style={{display:"none"}} onChange={e=>{
+                      const file=e.target.files[0]; if(!file) return;
+                      const reader=new FileReader();
+                      reader.onload=ev=>{setImportText(ev.target.result);setImportError("");};
+                      reader.readAsText(file); e.target.value="";
+                    }}/>
+                  </label>
+                  <label style={{...S.btn("outline"),display:"inline-flex",alignItems:"center",gap:6,cursor:"pointer",borderColor:"#22c55e",color:"#22c55e"}}>
+                    📊 Subir Excel (.xlsx)
+                    <input type="file" accept=".xlsx,.xls" style={{display:"none"}} onChange={e=>{
+                      var file=e.target.files[0]; if(!file) return;
+                      setImportError("Leyendo Excel…");
+                      var reader=new FileReader();
+                      reader.onload=function(ev){
+                        try {
+                          var result=parsearExcel(ev.target.result);
+                          setImportText(JSON.stringify(result,null,2));
+                          setImportError("");
+                          showToast("Excel leído: "+result.projects.length+" proy · "+result.people.length+" personas · "+result.assignments.length+" asig");
+                        } catch(err) {
+                          setImportError("Error leyendo Excel: "+err.message);
+                        }
+                      };
+                      reader.readAsArrayBuffer(file); e.target.value="";
+                    }}/>
+                  </label>
+                </div>
+
+                {/* Preview / textarea */}
+                <textarea
+                  placeholder={'Pega JSON aquí, o sube un archivo arriba…\n\n{"projects":[…],"people":[…],"assignments":[…]}'}
+                  value={importText}
+                  onChange={e=>{setImportText(e.target.value);setImportError("");}}
+                  style={{width:"100%",minHeight:130,background:"#020617",border:"1px solid #334155",borderRadius:8,padding:10,color:"#94a3b8",fontSize:11,fontFamily:"monospace",resize:"vertical",boxSizing:"border-box",marginBottom:8,outline:"none"}}
+                />
+
+                {importError && (
+                  <div style={{color:"#f87171",fontSize:12,marginBottom:10,background:"#450a0a",border:"1px solid #7f1d1d",borderRadius:6,padding:"6px 10px"}}>
+                    ⚠️ {importError}
+                  </div>
+                )}
+
+                <div style={{display:"flex",gap:8,justifyContent:"space-between",alignItems:"center",flexWrap:"wrap"}}>
+                  <button style={S.btn("ghost")} onClick={()=>{setImportText("");setImportError("");}}>🗑️ Limpiar</button>
+                  <button style={S.btn("danger")} onClick={()=>{
+                    if(!importText.trim()){setImportError("El campo está vacío");return;}
+                    let parsed;
+                    try{parsed=JSON.parse(importText);}catch(e){setImportError("JSON inválido: "+e.message);return;}
+                    const{projects:p,people:pe,assignments:a,absences:ab}=parsed;
+                    if(!Array.isArray(p)||!Array.isArray(pe)||!Array.isArray(a)){
+                      setImportError("Faltan campos: projects, people o assignments");return;
+                    }
+                    if(!window.confirm("¿Reemplazar TODOS los datos actuales? No se puede deshacer.")) return;
+                    update({projects:p,people:pe,assignments:a,absences:Array.isArray(ab)?ab:[]});
+                    setShowDataModal(false); setImportText(""); setImportError("");
+                    showToast("Importado ✓ — "+p.length+" proyectos · "+pe.length+" personas · "+a.length+" asignaciones");
+                  }}>⚠️ Importar y reemplazar todo</button>
+                </div>
+
+                {/* Columnas esperadas */}
+                <details style={{marginTop:14}}>
+                  <summary style={{fontSize:11,color:"#475569",cursor:"pointer",userSelect:"none"}}>📖 Ver columnas esperadas en Excel</summary>
+                  <div style={{marginTop:10,display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                    {[
+                      {hoja:"projects",cols:"id · name · client · status · horasOferta · horasConsumidas · tipo · inicio · fin · entrega"},
+                      {hoja:"people",cols:"id · name · software · status · horasDia"},
+                      {hoja:"assignments",cols:"personId · projectId · horas · horasReales · rol · software · fechaIni · fechaFin · pct"},
+                      {hoja:"absences (opcional)",cols:"id · personId · tipo · inicio · fin"},
+                    ].map(x=>(
+                      <div key={x.hoja} style={{background:"#020617",borderRadius:6,padding:10,border:"1px solid #1e293b"}}>
+                        <div style={{fontSize:11,fontWeight:700,color:"#a78bfa",marginBottom:4}}>📋 {x.hoja}</div>
+                        <div style={{fontSize:10,color:"#475569",lineHeight:1.6}}>{x.cols}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{fontSize:10,color:"#334155",marginTop:8}}>
+                    Las fechas pueden ser formato ISO (2026-01-15), dd/mm/yyyy, o número serial de Excel. Los nombres de columna son flexibles (acepta también: nombre, fecha_inicio, horas_dia, etc.)
+                  </div>
+                </details>
+              </div>
+
             </div>
           </div>
         )}
