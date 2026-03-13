@@ -3126,21 +3126,72 @@ function App() {
                   </div>
                 )}
 
+                {/* Explicación modos */}
+                <div style={{background:"#0a0f1a",border:"1px solid #1e293b",borderRadius:8,padding:"10px 14px",marginBottom:12,fontSize:11,color:"#64748b",lineHeight:1.7}}>
+                  <span style={{color:"#4ade80",fontWeight:700}}>🔀 Actualizar (merge):</span> añade lo nuevo, actualiza lo existente por ID, <strong style={{color:"#f1f5f9"}}>nunca borra</strong> lo que ya tienes.{"  ·  "}
+                  <span style={{color:"#f87171",fontWeight:700}}>💣 Reemplazar:</span> borra todo y carga solo lo del archivo. Úsalo solo si sabes lo que haces.
+                </div>
+
                 <div style={{display:"flex",gap:8,justifyContent:"space-between",alignItems:"center",flexWrap:"wrap"}}>
                   <button style={S.btn("ghost")} onClick={()=>{setImportText("");setImportError("");}}>🗑️ Limpiar</button>
-                  <button style={S.btn("danger")} onClick={()=>{
-                    if(!importText.trim()){setImportError("El campo está vacío");return;}
-                    let parsed;
-                    try{parsed=JSON.parse(importText);}catch(e){setImportError("JSON inválido: "+e.message);return;}
-                    const{projects:p,people:pe,assignments:a,absences:ab}=parsed;
-                    if(!Array.isArray(p)||!Array.isArray(pe)||!Array.isArray(a)){
-                      setImportError("Faltan campos: projects, people o assignments");return;
-                    }
-                    if(!window.confirm("¿Reemplazar TODOS los datos actuales? No se puede deshacer.")) return;
-                    update({projects:p,people:pe,assignments:a,absences:Array.isArray(ab)?ab:[]});
-                    setShowDataModal(false); setImportText(""); setImportError("");
-                    showToast("Importado ✓ — "+p.length+" proyectos · "+pe.length+" personas · "+a.length+" asignaciones");
-                  }}>⚠️ Importar y reemplazar todo</button>
+                  <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+
+                    {/* MERGE */}
+                    <button style={{...S.btn("primary"),background:"#166534",borderColor:"#166534"}} onClick={()=>{
+                      if(!importText.trim()){setImportError("El campo está vacío");return;}
+                      var parsed;
+                      try{parsed=JSON.parse(importText);}catch(e){setImportError("JSON inválido: "+e.message);return;}
+                      var np=parsed.projects, npe=parsed.people, na=parsed.assignments, nab=parsed.absences;
+                      // Merge projects by id
+                      var mergedP = projects.slice();
+                      if(Array.isArray(np)) np.forEach(function(item){
+                        var idx=mergedP.findIndex(function(x){return x.id===item.id;});
+                        if(idx>=0) mergedP[idx]=Object.assign({},mergedP[idx],item);
+                        else mergedP.push(item);
+                      });
+                      // Merge people by id
+                      var mergedPe = people.slice();
+                      if(Array.isArray(npe)) npe.forEach(function(item){
+                        var idx=mergedPe.findIndex(function(x){return x.id===item.id;});
+                        if(idx>=0) mergedPe[idx]=Object.assign({},mergedPe[idx],item);
+                        else mergedPe.push(item);
+                      });
+                      // Merge assignments by personId+projectId+rol
+                      var mergedA = assignments.slice();
+                      if(Array.isArray(na)) na.forEach(function(item){
+                        var idx=mergedA.findIndex(function(x){return x.personId===item.personId&&x.projectId===item.projectId&&x.rol===item.rol;});
+                        if(idx>=0) mergedA[idx]=Object.assign({},mergedA[idx],item);
+                        else mergedA.push(item);
+                      });
+                      // Merge absences by id
+                      var mergedAb = absences.slice();
+                      if(Array.isArray(nab)) nab.forEach(function(item){
+                        var idx=mergedAb.findIndex(function(x){return x.id===item.id;});
+                        if(idx>=0) mergedAb[idx]=Object.assign({},mergedAb[idx],item);
+                        else mergedAb.push(item);
+                      });
+                      update({projects:mergedP,people:mergedPe,assignments:mergedA,absences:mergedAb});
+                      setShowDataModal(false); setImportText(""); setImportError("");
+                      var added=(Array.isArray(np)?np.length:0)+(Array.isArray(npe)?npe.length:0)+(Array.isArray(na)?na.length:0);
+                      showToast("Merge ✓ — "+added+" registros procesados, nada borrado");
+                    }}>🔀 Actualizar (merge)</button>
+
+                    {/* REPLACE ALL */}
+                    <button style={S.btn("danger")} onClick={()=>{
+                      if(!importText.trim()){setImportError("El campo está vacío");return;}
+                      var parsed;
+                      try{parsed=JSON.parse(importText);}catch(e){setImportError("JSON inválido: "+e.message);return;}
+                      var p=parsed.projects, pe=parsed.people, a=parsed.assignments, ab=parsed.absences;
+                      if(!Array.isArray(p)||!Array.isArray(pe)||!Array.isArray(a)){
+                        setImportError("Faltan campos: projects, people o assignments");return;
+                      }
+                      if(!window.confirm("💣 ¿Reemplazar TODOS los datos? Esto borrará todo lo actual. No se puede deshacer.")) return;
+                      update({projects:p,people:pe,assignments:a,absences:Array.isArray(ab)?ab:[]});
+                      setShowDataModal(false); setImportText(""); setImportError("");
+                      showToast("Reemplazado ✓ — "+p.length+" proy · "+pe.length+" pers · "+a.length+" asig");
+                    }}>💣 Reemplazar todo</button>
+
+                  </div>
                 </div>
 
                 {/* Columnas esperadas */}
