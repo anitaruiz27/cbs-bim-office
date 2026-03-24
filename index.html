@@ -1958,6 +1958,12 @@ function App() {
   const [projFormModal,    setProjFormModal]    = useState(null);
   const [personFormModal,  setPersonFormModal]  = useState(null);
   const [showDataModal,    setShowDataModal]    = useState(false);
+  const [pjPersonId,       setPjPersonId]       = useState("");
+  const [pjRol,            setPjRol]            = useState("Modelado");
+  const [pjSoftware,       setPjSoftware]       = useState("Revit");
+  const [pjFechaIni,       setPjFechaIni]       = useState("");
+  const [pjFechaFin,       setPjFechaFin]       = useState("");
+  const [pjPct,            setPjPct]            = useState(100);
   const [importText,       setImportText]       = useState("");
   const [importError,      setImportError]      = useState("");
 
@@ -2101,6 +2107,27 @@ function App() {
 
   const EMPTY_PROJ   = {name:"",client:"",bimId:"",tipo:"MOD",status:"Inicio",horasOferta:0,horasConsumidas:0,horasOfertaMod:0,horasOfertaCoo:0,horasConsMod:0,horasConsCoo:0,inicio:"",fin:"",entrega:"",hitos:[]};
   const EMPTY_PERSON = {name:"",perfil:"BIM Modelador",ubicacion:"Madrid",status:"Activo OT",software:"Revit",horasDia:8};
+
+  const projModalAssigs = projFormModal ? assignments.filter(function(a){ return a.projectId === projFormModal.data.id; }) : [];
+
+  const resetPjForm = () => { setPjPersonId(""); setPjRol("Modelado"); setPjSoftware("Revit"); setPjFechaIni(""); setPjFechaFin(""); setPjPct(100); };
+
+  const saveAssignmentFromProject = () => {
+    if(!pjPersonId || !projFormModal) return;
+    var prId = projFormModal.data.id;
+    if(!prId) return;
+    var person = people.find(function(p){ return p.id === pjPersonId; });
+    var horas = calcHoras(pjFechaIni, pjFechaFin, pjPct, person ? person.horasDia : 8);
+    var entry = {personId:pjPersonId, projectId:prId, horas:horas||0, horasReales:0,
+      rol:pjRol, software:pjSoftware, fechaIni:pjFechaIni||null, fechaFin:pjFechaFin||null, pct:pjPct||100};
+    var exists = assignments.find(function(a){ return a.personId===pjPersonId && a.projectId===prId && a.rol===pjRol; });
+    var newA = exists
+      ? assignments.map(function(a){ return a.personId===pjPersonId && a.projectId===prId && a.rol===pjRol ? Object.assign({},a,entry) : a; })
+      : [...assignments, entry];
+    update({assignments:newA});
+    resetPjForm();
+    showToast("Asignación añadida ✓");
+  };
 
   const openNewProject  = () => setProjFormModal({mode:"new",  data:{...EMPTY_PROJ}});
   const openEditProject = (p) => setProjFormModal({mode:"edit", data:{...p, hitos:p.hitos||[]}});
@@ -2991,6 +3018,57 @@ function App() {
                   </div>
                 ))}
               </div>
+
+              {/* EQUIPO / ASIGNACIONES */}
+              {projFormModal.mode==="edit" && (
+                <div style={{marginTop:20,paddingTop:16,borderTop:"1px solid #1e3a5f"}}>
+                  <div style={{fontSize:11,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"0.5px",marginBottom:10}}>👥 Equipo asignado</div>
+                  {projModalAssigs.length===0 && (
+                    <div style={{fontSize:11,color:"#334155",textAlign:"center",padding:"6px 0",marginBottom:6}}>Sin asignaciones. Añade personas abajo.</div>
+                  )}
+                  {projModalAssigs.map(function(a,ai){
+                    var per=people.find(function(p){return p.id===a.personId;});
+                    var perName=per?per.name:a.personId;
+                    return (
+                      <div key={ai} style={{display:"grid",gridTemplateColumns:"1fr auto auto auto",gap:8,alignItems:"center",marginBottom:6,padding:"7px 10px",background:"#0f172a",borderRadius:8,border:"1px solid #1e3a5f"}}>
+                        <div>
+                          <span style={{fontSize:12,fontWeight:600,color:"#e2e8f0"}}>{perName}</span>
+                          <span style={{fontSize:10,color:"#64748b",marginLeft:8}}>{a.rol}</span>
+                        </div>
+                        <span style={{fontSize:11,color:"#94a3b8",whiteSpace:"nowrap"}}>{a.horas}h</span>
+                        <span style={{fontSize:10,color:"#64748b",whiteSpace:"nowrap"}}>{a.pct?a.pct+"%":""}{a.fechaIni?" · "+a.fechaIni.slice(5):""}{a.fechaFin?"→"+a.fechaFin.slice(5):""}</span>
+                        <button type="button" onClick={function(){removeAssignment(a.personId,a.projectId,a.rol);}} style={{border:"none",background:"none",color:"#ef4444",cursor:"pointer",fontSize:16,fontWeight:700,padding:"0 4px"}}>×</button>
+                      </div>
+                    );
+                  })}
+                  <div style={{marginTop:8,padding:"12px",background:"#0a0f1a",borderRadius:8,border:"1px dashed #334155"}}>
+                    <div style={{fontSize:10,fontWeight:700,color:"#475569",textTransform:"uppercase",letterSpacing:"0.5px",marginBottom:8}}>+ Añadir persona</div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
+                      <select value={pjPersonId} onChange={function(e){setPjPersonId(e.target.value);}} style={{...S.sel,marginTop:0,fontSize:12}}>
+                        <option value="">— Selecciona persona —</option>
+                        {people.filter(function(p){return p.status!=="Baja médica";}).map(function(p){
+                          return <option key={p.id} value={p.id}>{p.name}</option>;
+                        })}
+                      </select>
+                      <select value={pjRol} onChange={function(e){setPjRol(e.target.value);}} style={{...S.sel,marginTop:0,fontSize:12}}>
+                        {["Modelado","Coordinación","BEP","Revisión","Apoyo"].map(function(r){return <option key={r}>{r}</option>;})}
+                      </select>
+                    </div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 70px",gap:8,marginBottom:8}}>
+                      <input type="date" value={pjFechaIni} onChange={function(e){setPjFechaIni(e.target.value);}} style={{...S.inp,marginTop:0,fontSize:12,padding:"5px 8px"}}/>
+                      <input type="date" value={pjFechaFin} onChange={function(e){setPjFechaFin(e.target.value);}} style={{...S.inp,marginTop:0,fontSize:12,padding:"5px 8px"}}/>
+                      <div style={{display:"flex",alignItems:"center",gap:3}}>
+                        <input type="number" min="5" max="100" step="5" value={pjPct} onChange={function(e){setPjPct(Number(e.target.value));}} style={{...S.inp,marginTop:0,fontSize:12,padding:"5px 4px",textAlign:"center"}}/>
+                        <span style={{fontSize:10,color:"#64748b"}}>%</span>
+                      </div>
+                    </div>
+                    <button type="button" onClick={saveAssignmentFromProject}
+                      style={{width:"100%",border:"none",borderRadius:6,background:pjPersonId?"#3b82f6":"#1e293b",color:pjPersonId?"#fff":"#475569",padding:"7px",fontSize:12,fontWeight:700,cursor:pjPersonId?"pointer":"default"}}>
+                      ＋ Añadir al proyecto
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div style={{display:"flex",gap:8,marginTop:24,justifyContent:"space-between",alignItems:"center"}}>
                 {projFormModal.mode==="edit"?(
