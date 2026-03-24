@@ -118,7 +118,6 @@ const STORAGE_KEY = "cbs_bim_2026_v2";
 const SCOPE_KEY   = "cbs_bim_scope_v2";
 const MAX_H = 160;
 const TODAY = new Date("2026-03-10");
-const TODAY_STR = TODAY.toISOString().slice(0,10);
 
 // Default scope data per project: hitos, disciplinas, % manual
 const SCOPE_DEFAULT = {
@@ -715,7 +714,6 @@ function PeopleGanttView({ projects, people, assignments, absences, onUpdateAbse
 // ─── GANTT CALENDAR VIEW ──────────────────────────────────────────────────────
 
 function GanttView({ projects, assignments }) {
-  var consumidasByProj = computeConsumidas(assignments, []);
 
   const [ganttYear, setGanttYear] = useState(2026);
   const [tooltip,   setTooltip]   = useState(null); // {proj, x, y}
@@ -872,12 +870,12 @@ function GanttView({ projects, assignments }) {
           const entPct    = proj.entrega ? pctX(proj.entrega) : null;
           const barW      = Math.max(endPct - startPct, 0.01);
           const color     = GANTT_COLORS[i % GANTT_COLORS.length];
-          const rent      = rentColor(proj.horasOferta, getConsumidas(proj,consumidasByProj));
+          const rent      = rentColor(proj.horasOferta, proj.horasConsumidas);
           const nPersonas = assignments.filter(a=>a.projectId===proj.id).length;
           const isEven    = i % 2 === 0;
 
           // progress fill inside bar
-          const consumed  = proj.horasOferta > 0 ? getConsumidas(proj,consumidasByProj) / proj.horasOferta : 0;
+          const consumed  = proj.horasOferta > 0 ? proj.horasConsumidas / proj.horasOferta : 0;
           const progW     = Math.min(consumed, 1) * barW;
 
           return (
@@ -1053,10 +1051,10 @@ function GanttView({ projects, assignments }) {
                 {tooltip.proj.entrega&&<><span style={{color:"#64748b"}}>Entrega</span>
                 <span style={{color:"#f59e0b",fontWeight:700}}>{fmtD(parseD(tooltip.proj.entrega))}</span></>}
                 <span style={{color:"#64748b"}}>Horas</span>
-                <span style={{color:"#e2e8f0"}}>{getConsumidas(tooltip.proj,consumidasByProj)}/{tooltip.proj.horasOferta}h</span>
+                <span style={{color:"#e2e8f0"}}>{tooltip.proj.horasConsumidas}/{tooltip.proj.horasOferta}h</span>
                 <span style={{color:"#64748b"}}>Avance</span>
-                <span style={{color:progressColor(Math.round(getConsumidas(tooltip.proj,consumidasByProj)/tooltip.proj.horasOferta*100)),fontWeight:700}}>
-                  {tooltip.proj.horasOferta>0?Math.round(getConsumidas(tooltip.proj,consumidasByProj)/tooltip.proj.horasOferta*100):0}%
+                <span style={{color:progressColor(Math.round(tooltip.proj.horasConsumidas/tooltip.proj.horasOferta*100)),fontWeight:700}}>
+                  {tooltip.proj.horasOferta>0?Math.round(tooltip.proj.horasConsumidas/tooltip.proj.horasOferta*100):0}%
                 </span>
               </div>
             </>
@@ -1070,7 +1068,6 @@ function GanttView({ projects, assignments }) {
 // ─── REPORT VIEW ──────────────────────────────────────────────────────────────
 
 function ReportView({ projects, people, assignments }) {
-  var consumidasByProj = computeConsumidas(assignments, people);
 
   const [reportMode, setReportMode] = useState("proyecto"); // "proyecto" | "persona" | "fecha"
   const [filterProj, setFilterProj] = useState("__todos__");
@@ -1104,7 +1101,7 @@ function ReportView({ projects, people, assignments }) {
   };
 
   // Hours advance
-  const horasAvance = (p) => p.horasOferta > 0 ? Math.round(getConsumidas(p, consumidasByProj) / p.horasOferta * 100) : 0;
+  const horasAvance = (p) => p.horasOferta > 0 ? Math.round(p.horasConsumidas / p.horasOferta * 100) : 0;
 
   // RAG status: based on scope vs hours divergence + consumption
   const rag = (proj) => {
@@ -1177,7 +1174,7 @@ function ReportView({ projects, people, assignments }) {
             {label:"Proyectos",       value:projs.length,                                   sub:"en este informe",       c:"#3b82f6"},
             {label:"En riesgo 🔴",    value:projs.filter(p=>rag(p)==="R").length,            sub:"superan umbral RAG",    c:"#ef4444"},
             {label:"En alerta 🟡",    value:projs.filter(p=>rag(p)==="A").length,            sub:"requieren atención",    c:"#f59e0b"},
-            {label:"Horas totales",   value:projs.reduce((s,p)=>s+getConsumidas(p,consumidasByProj),0)+"h", sub:`de ${projs.reduce((s,p)=>s+p.horasOferta,0)}h ofertadas`, c:"#22c55e"},
+            {label:"Horas totales",   value:projs.reduce((s,p)=>s+p.horasConsumidas,0)+"h", sub:`de ${projs.reduce((s,p)=>s+p.horasOferta,0)}h ofertadas`, c:"#22c55e"},
           ].map(({label,value,sub,c})=>(
             <div key={label} style={S2.kpi}>
               <div style={{fontSize:10,color:"#64748b",textTransform:"uppercase",letterSpacing:"0.5px",marginBottom:6}}>{label}</div>
@@ -1257,7 +1254,7 @@ function ReportView({ projects, people, assignments }) {
                           </div>
                           <span style={{fontSize:11,fontWeight:700,color:progressColor(hPct)}}>{hPct}%</span>
                         </div>
-                        <div style={{fontSize:9,color:"#475569"}}>{getConsumidas(proj,consumidasByProj)}/{proj.horasOferta}h</div>
+                        <div style={{fontSize:9,color:"#475569"}}>{proj.horasConsumidas}/{proj.horasOferta}h</div>
                       </td>
                       <td style={S2.tdc}>{mPct!==null?(<><div style={{display:"flex",alignItems:"center",gap:4}}><div style={{background:"#0f172a",borderRadius:99,height:4,width:36,overflow:"hidden"}}><div style={{width:`${Math.min(mPct,100)}%`,height:"100%",background:progressColor(mPct),borderRadius:99}}/></div><span style={{fontSize:10,fontWeight:700,color:progressColor(mPct)}}>{mPct}%</span></div><div style={{fontSize:9,color:"#475569"}}>{proj.horasConsMod||0}/{proj.horasOfertaMod}h</div>{hM>0&&<div style={{fontSize:9,color:"#3b82f6"}}>👤{hM}h</div>}</>):<span style={{color:"#334155"}}>—</span>}</td>
                       <td style={S2.tdc}>{cPct!==null?(<><div style={{display:"flex",alignItems:"center",gap:4}}><div style={{background:"#0f172a",borderRadius:99,height:4,width:36,overflow:"hidden"}}><div style={{width:`${Math.min(cPct,100)}%`,height:"100%",background:progressColor(cPct),borderRadius:99}}/></div><span style={{fontSize:10,fontWeight:700,color:progressColor(cPct)}}>{cPct}%</span></div><div style={{fontSize:9,color:"#475569"}}>{proj.horasConsCoo||0}/{proj.horasOfertaCoo}h</div>{hC>0&&<div style={{fontSize:9,color:"#a78bfa"}}>👤{hC}h</div>}</>):<span style={{color:"#334155"}}>—</span>}</td>
@@ -1802,23 +1799,6 @@ function calcHoras(fechaIni, fechaFin, pct, horasDia) {
   var p = pct || 100;
   return Math.round(days * hd * p / 100);
 }
-function computeConsumidas(asigs, ppl) {
-  var m = {};
-  for(var i=0;i<asigs.length;i++){
-    var a=asigs[i]; if(!a.fechaIni) continue;
-    var fin=(a.fechaFin&&a.fechaFin<TODAY_STR)?a.fechaFin:TODAY_STR;
-    if(fin<a.fechaIni) continue;
-    var per=ppl.find(function(p){return p.id===a.personId;});
-    var hd=per?(per.horasDia||8):8;
-    m[a.projectId]=(m[a.projectId]||0)+workingDays(a.fechaIni,fin)*hd*(a.pct||100)/100;
-  }
-  for(var k in m) m[k]=Math.round(m[k]);
-  return m;
-}
-function getConsumidas(proj, cmap) {
-  var v=cmap[proj.id];
-  return (v!=null&&v>0)?v:(proj.horasConsumidas||0);
-}
 
 function parseFechaExcel(v) {
   if (!v) return "";
@@ -1946,6 +1926,7 @@ function App() {
   const [view,             setView]             = useState("projects");
   const [calTab,           setCalTab]           = useState("proyectos");
   const [selProject,       setSelProject]       = useState(null);
+  const detailRef = useRef(null);
   const [selPerson,        setSelPerson]        = useState(null);
   const [search,           setSearch]           = useState("");
   const [modal,            setModal]            = useState(null);
@@ -2002,7 +1983,6 @@ function App() {
     for(const a of assignments) m[a.personId] = (m[a.personId]||0) + a.horas;
     return m;
   }, [assignments]);
-  var consumidasByProj = computeConsumidas(assignments, people);
 
   // Recalculate horas when modal date/pct changes
   const recalcModal = (fechaIni, fechaFin, pct, personId) => {
@@ -2121,8 +2101,8 @@ function App() {
   });
 
   const totalOferta    = projects.reduce((s,p)=>s+p.horasOferta,0);
-  const totalConsumidas= projects.reduce((s,p)=>s+getConsumidas(p,consumidasByProj),0);
-  const enRiesgo       = projects.filter(p=>p.horasOferta>0&&getConsumidas(p,consumidasByProj)/p.horasOferta>1).length;
+  const totalConsumidas= projects.reduce((s,p)=>s+p.horasConsumidas,0);
+  const enRiesgo       = projects.filter(p=>p.horasOferta>0&&p.horasConsumidas/p.horasOferta>1).length;
   const activos        = people.filter(p=>p.status==="Activo OT").length;
   const activosHoy     = projects.filter(p=>p.inicio&&p.fin&&parseD(p.inicio)<=TODAY&&parseD(p.fin)>=TODAY).length;
 
@@ -2305,12 +2285,12 @@ function App() {
             {selProject && projView==="cards" && (() => {
               const proj = selProject;
               const asgns = asgnByProject(proj.id);
-              const rent = rentColor(proj.horasOferta,getConsumidas(proj,consumidasByProj));
-              const pct = proj.horasOferta>0?Math.round(getConsumidas(proj,consumidasByProj)/proj.horasOferta*100):0;
+              const rent = rentColor(proj.horasOferta,proj.horasConsumidas);
+              const pct = proj.horasOferta>0?Math.round(proj.horasConsumidas/proj.horasOferta*100):0;
               const isEditC = editProjKey===proj.id;
               const hitos = proj.hitos||[];
               return (
-                <div style={S.det}>
+                <div ref={detailRef} style={S.det}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
                     <div>
                       <div style={{display:"flex",gap:6,marginBottom:6}}>
@@ -2383,7 +2363,7 @@ function App() {
                     </div>
                     <div style={{background:"#0f172a",borderRadius:8,padding:"10px 14px"}}>
                       <span style={S.lbl}>H. Pendientes</span>
-                      <div style={{fontSize:22,fontWeight:800,color:"#f1f5f9"}}>{proj.horasOferta-getConsumidas(proj,consumidasByProj)}h</div>
+                      <div style={{fontSize:22,fontWeight:800,color:"#f1f5f9"}}>{proj.horasOferta-proj.horasConsumidas}h</div>
                     </div>
                     <div style={{background:"#0f172a",borderRadius:8,padding:"10px 14px"}}>
                       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:2}}>
@@ -2397,7 +2377,7 @@ function App() {
                           <button style={S.btn("ghost")}   onClick={()=>setEditProjKey(null)}>✕</button>
                         </div>
                       ) : (
-                        <div style={{fontSize:22,fontWeight:800,color:"#f1f5f9"}}>{getConsumidas(proj,consumidasByProj)}h</div>
+                        <div style={{fontSize:22,fontWeight:800,color:"#f1f5f9"}}>{proj.horasConsumidas}h</div>
                       )}
                     </div>
                   </div>
@@ -2473,15 +2453,15 @@ function App() {
             {/* CARDS */}
             {projView==="cards" && filteredProjects.map((proj,i)=>{
               const asgns=asgnByProject(proj.id);
-              const pct=proj.horasOferta>0?Math.round(getConsumidas(proj,consumidasByProj)/proj.horasOferta*100):0;
-              const rent=rentColor(proj.horasOferta,getConsumidas(proj,consumidasByProj));
+              const pct=proj.horasOferta>0?Math.round(proj.horasConsumidas/proj.horasOferta*100):0;
+              const rent=rentColor(proj.horasOferta,proj.horasConsumidas);
               const closed=proj.status==="Cerrado";
               const sel=selProject&&selProject.id===proj.id;
               const hitos=proj.hitos||[];
               const hitosOk=hitos.filter(h=>h.ok).length;
               return (
                 <div key={proj.id} style={{...S.card(sel),opacity:closed?0.75:1}}>
-                  <div style={{padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}} onClick={()=>setSelProject(sel?null:proj)}>
+                  <div style={{padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}} onClick={()=>{setSelProject(sel?null:proj);if(!sel)setTimeout(function(){if(detailRef.current)detailRef.current.scrollIntoView({behavior:"smooth",block:"start"});},50);}}>
                     <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
                       <div style={{width:10,height:10,borderRadius:"50%",background:GANTT_COLORS[i%GANTT_COLORS.length],flexShrink:0}}/>
                       <div style={{minWidth:0}}>
@@ -2525,7 +2505,7 @@ function App() {
                   <tbody>
                     {filteredProjects.map((proj,i)=>{
                       const closed=proj.status==="Cerrado";
-                      const pct=proj.horasOferta>0?Math.round(getConsumidas(proj,consumidasByProj)/proj.horasOferta*100):0;
+                      const pct=proj.horasOferta>0?Math.round(proj.horasConsumidas/proj.horasOferta*100):0;
                       const nP=asgnByProject(proj.id).length;
                       const hitos=proj.hitos||[];
                       const hitosOk=hitos.filter(h=>h.ok).length;
@@ -2547,7 +2527,7 @@ function App() {
                               <div style={{background:"#0f172a",borderRadius:99,height:4,width:36,overflow:"hidden"}}>
                                 <div style={{width:Math.min(pct,100)+"%",height:"100%",background:progressColor(pct)}}/>
                               </div>
-                              <span style={{color:progressColor(pct),fontWeight:700,fontSize:10}}>{getConsumidas(proj,consumidasByProj)}h</span>
+                              <span style={{color:progressColor(pct),fontWeight:700,fontSize:10}}>{proj.horasConsumidas}h</span>
                             </div>
                           </td>
                           <td style={{...cs,textAlign:"right",color:"#3b82f6"}}>{proj.horasOfertaMod||0}h</td>
