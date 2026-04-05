@@ -8,6 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
   *{box-sizing:border-box;margin:0;padding:0}
@@ -25,8 +26,8 @@
 <div id="root"></div>
 <script type="text/babel">
 
-
-const { useState, useMemo, useRef, useCallback } = React;
+const { useState, useMemo, useRef, useCallback, useEffect } = React;
+// React hooks already imported above
 
 // ─── DATA ─────────────────────────────────────────────────────────────────────
 
@@ -1893,25 +1894,532 @@ function parsearExcel(arrayBuffer) {
   return { projects: proyectos, people: personas, assignments: asignaciones, absences: ausencias };
 }
 
-function App() {
 
-  const [data, setData] = useState(() => {
+// ─── SUPABASE ─────────────────────────────────────────────────────────────────
+const SUPA_URL = "https://plzyqsszhmznkhmyvtxa.supabase.co";
+const SUPA_KEY = "sb_publishable_OmGEmKqI84R_1mm-n5mXvg_wa2C_5FH";
+const { createClient } = supabase;
+const sb = createClient(SUPA_URL, SUPA_KEY);
+
+async function sha256(msg) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function checkFirstRun() {
+  try { const { count } = await sb.from('app_users').select('*',{count:'exact',head:true}); return count===0; }
+  catch(e) { return false; }
+}
+async function loginUser(email, password) {
+  const hash = await sha256(password);
+  const { data, error } = await sb.from('app_users').select('*').eq('email',email.toLowerCase().trim()).eq('password_hash',hash).single();
+  if(error||!data) throw new Error('Email o contraseña incorrectos');
+  return { id:data.id, email:data.email, name:data.name, role:data.role };
+}
+async function createUser(email, name, role, password) {
+  const hash = await sha256(password);
+  const { data, error } = await sb.from('app_users').insert({email:email.toLowerCase().trim(),name,role,password_hash:hash}).select().single();
+  if(error) throw new Error('Error creando usuario: '+error.message);
+  return data;
+}
+async function deleteUser(id) {
+  await sb.from('app_users').delete().eq('id',id);
+}
+async function listUsers() {
+  const { data } = await sb.from('app_users').select('id,email,name,role,created_at').order('created_at');
+  return data||[];
+}
+async function loadFromSupabase() {
+  const [pr,pe,as,ab] = await Promise.all([
+    sb.from('projects').select('data'),
+    sb.from('people').select('data'),
+    sb.from('assignments').select('data'),
+    sb.from('absences').select('data'),
+  ]);
+  return {
+    projects:    (pr.data||[]).map(r=>r.data).filter(Boolean),
+    people:      (pe.data||[]).map(r=>r.data).filter(Boolean),
+    assignments: (as.data||[]).map(r=>r.data).filter(Boolean),
+    absences:    (ab.data||[]).map(r=>r.data).filter(Boolean),
+  };
+}
+async function syncToSupabase(patch) {
+  const ops=[];
+  if(patch.projects) ops.push(sb.from('projects').upsert(patch.projects.map(p=>({id:p.id,data:p,updated_at:new Date().toISOString()}))));
+  if(patch.people)   ops.push(sb.from('people').upsert(patch.people.map(p=>({id:p.id,data:p,updated_at:new Date().toISOString()}))));
+  if(patch.assignments) {
+    const ts=new Date().toISOString();
+    ops.push(sb.from('assignments').delete().gte('updated_at','1970-01-01T00:00:00Z').then(()=>
+      patch.assignments.length>0 ? sb.from('assignments').insert(patch.assignments.map(a=>({person_id:a.personId,project_id:a.projectId,data:a,updated_at:ts}))) : Promise.resolve()
+    ));
+  }
+  if(patch.absences&&patch.absences.length>0) ops.push(sb.from('absences').upsert(patch.absences.map(a=>({id:a.id||('ab'+Date.now()),person_id:a.personId,data:a,updated_at:new Date().toISOString()}))));
+  await Promise.all(ops);
+}
+
+// ─── LOGIN / SETUP / LOADING SCREENS ─────────────────────────────────────────
+function LoadingScreen({msg}) {
+  return (
+    <div style={{minHeight:'100vh',background:'#0f172a',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:16}}>
+      <div style={{width:44,height:44,borderRadius:10,background:'linear-gradient(135deg,#3b82f6,#0ea5e9)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,fontSize:22,color:'#fff'}}>B</div>
+      <div style={{fontSize:14,color:'#64748b'}}>{msg||'Cargando…'}</div>
+    </div>
+  );
+}
+
+function LoginScreen({onLogin}) {
+  const [email,setEmail]=React.useState('');
+  const [pass,setPass]=React.useState('');
+  const [err,setErr]=React.useState('');
+  const [busy,setBusy]=React.useState(false);
+  const handle=async()=>{
+    if(!email.trim()||!pass.trim()){setErr('Introduce email y contraseña');return;}
+    setBusy(true);setErr('');
+    try{await onLogin(email,pass);}
+    catch(e){setErr(e.message);}
+    finally{setBusy(false);}
+  };
+  const inp={background:'#0f172a',border:'1px solid #334155',borderRadius:8,padding:'10px 14px',color:'#e2e8f0',fontSize:14,width:'100%',outline:'none'};
+  const lbl={fontSize:11,color:'#64748b',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:6,display:'block'};
+  return (
+    <div style={{minHeight:'100vh',background:'#0f172a',display:'flex',alignItems:'center',justifyContent:'center'}}>
+      <div style={{background:'#1e293b',border:'1px solid #1e3a5f',borderRadius:16,padding:'40px 36px',width:380,maxWidth:'92vw'}}>
+        <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:32}}>
+          <div style={{width:44,height:44,borderRadius:10,background:'linear-gradient(135deg,#3b82f6,#0ea5e9)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,fontSize:22,color:'#fff'}}>B</div>
+          <div>
+            <div style={{fontSize:18,fontWeight:800,color:'#f1f5f9'}}>CBS BIM Office</div>
+            <div style={{fontSize:11,color:'#64748b',textTransform:'uppercase',letterSpacing:'0.5px'}}>Acceso al sistema</div>
+          </div>
+        </div>
+        <div style={{marginBottom:16}}><label style={lbl}>Email</label><input type="email" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handle()} style={inp}/></div>
+        <div style={{marginBottom:24}}><label style={lbl}>Contraseña</label><input type="password" value={pass} onChange={e=>setPass(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handle()} style={inp}/></div>
+        {err&&<div style={{color:'#ef4444',fontSize:12,marginBottom:14,background:'#450a0a',border:'1px solid #7f1d1d',borderRadius:6,padding:'8px 12px'}}>{err}</div>}
+        <button onClick={handle} disabled={busy} style={{width:'100%',background:busy?'#1e3a5f':'#3b82f6',color:'#fff',border:'none',borderRadius:8,padding:'11px',fontSize:14,fontWeight:700,cursor:busy?'wait':'pointer'}}>
+          {busy?'Entrando…':'Entrar'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function SetupScreen({onSetup}) {
+  const [name,setName]=React.useState('');
+  const [email,setEmail]=React.useState('');
+  const [pass,setPass]=React.useState('');
+  const [pass2,setPass2]=React.useState('');
+  const [err,setErr]=React.useState('');
+  const [busy,setBusy]=React.useState(false);
+  const handle=async()=>{
+    if(!name.trim()||!email.trim()||!pass.trim()){setErr('Completa todos los campos');return;}
+    if(pass!==pass2){setErr('Las contraseñas no coinciden');return;}
+    if(pass.length<6){setErr('Mínimo 6 caracteres');return;}
+    setBusy(true);setErr('');
+    try{await onSetup(email,name,pass);}
+    catch(e){setErr(e.message);}
+    finally{setBusy(false);}
+  };
+  const inp={background:'#0f172a',border:'1px solid #334155',borderRadius:8,padding:'10px 14px',color:'#e2e8f0',fontSize:14,width:'100%',outline:'none'};
+  const lbl={fontSize:11,color:'#64748b',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:6,display:'block'};
+  return (
+    <div style={{minHeight:'100vh',background:'#0f172a',display:'flex',alignItems:'center',justifyContent:'center'}}>
+      <div style={{background:'#1e293b',border:'1px solid #22c55e40',borderRadius:16,padding:'40px 36px',width:400,maxWidth:'92vw'}}>
+        <div style={{marginBottom:28}}>
+          <div style={{fontSize:20,fontWeight:800,color:'#f1f5f9',marginBottom:6}}>🚀 Configuración inicial</div>
+          <div style={{fontSize:13,color:'#64748b'}}>Primera vez en el sistema. Crea tu cuenta de administrador.</div>
+        </div>
+        {[{l:'Nombre completo',v:name,s:setName,t:'text'},{l:'Email',v:email,s:setEmail,t:'email'},{l:'Contraseña',v:pass,s:setPass,t:'password'},{l:'Repetir contraseña',v:pass2,s:setPass2,t:'password'}].map(f=>(
+          <div key={f.l} style={{marginBottom:16}}><label style={lbl}>{f.l}</label><input type={f.t} value={f.v} onChange={e=>f.s(e.target.value)} style={inp}/></div>
+        ))}
+        {err&&<div style={{color:'#ef4444',fontSize:12,marginBottom:14,background:'#450a0a',border:'1px solid #7f1d1d',borderRadius:6,padding:'8px 12px'}}>{err}</div>}
+        <button onClick={handle} disabled={busy} style={{width:'100%',background:busy?'#166534':'#22c55e',color:'#fff',border:'none',borderRadius:8,padding:'11px',fontSize:14,fontWeight:700,cursor:busy?'wait':'pointer'}}>
+          {busy?'Creando…':'Crear cuenta Admin y entrar'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── ALERTS TAB ───────────────────────────────────────────────────────────────
+function AlertsTab({projects,people,assignments,absences}) {
+  const today=new Date();
+  const in15=new Date(today);in15.setDate(in15.getDate()+15);
+  const in7=new Date(today);in7.setDate(in7.getDate()+7);
+  const in30=new Date(today);in30.setDate(in30.getDate()+30);
+
+  const sinCobertura=people.filter(p=>p.status==='Activo OT').filter(p=>{
+    const myA=assignments.filter(a=>a.personId===p.id);
+    if(myA.length===0) return true;
+    return !myA.some(a=>{
+      const proj=projects.find(pr=>pr.id===a.projectId);
+      if(!proj) return false;
+      const fin=new Date((a.fechaFin||proj.fin)+'T00:00:00');
+      const ini=new Date((a.fechaIni||proj.inicio)+'T00:00:00');
+      return fin>=today&&ini<=in15;
+    });
+  });
+
+  const entregas7=projects.filter(p=>p.status!=='Cerrado'&&p.entrega).filter(p=>{
+    const d=new Date(p.entrega+'T00:00:00'); return d>=today&&d<=in7;
+  });
+  const fin30=projects.filter(p=>p.status!=='Cerrado'&&p.fin).filter(p=>{
+    const d=new Date(p.fin+'T00:00:00'); return d>=today&&d<=in30;
+  });
+  const overBudget=projects.filter(p=>p.horasOferta>0&&p.horasConsumidas/p.horasOferta>1);
+  const absConflicts=(absences||[]).filter(ab=>{
+    return assignments.filter(a=>a.personId===ab.personId).some(a=>{
+      const proj=projects.find(p=>p.id===a.projectId);
+      if(!proj) return false;
+      const pI=new Date((a.fechaIni||proj.inicio)+'T00:00:00');
+      const pF=new Date((a.fechaFin||proj.fin)+'T00:00:00');
+      const aI=new Date(ab.inicio+'T00:00:00');
+      const aF=new Date(ab.fin+'T00:00:00');
+      return pI<=aF&&pF>=aI;
+    });
+  });
+
+  const total=sinCobertura.length+entregas7.length+overBudget.length+absConflicts.length;
+
+  const Block=({color,title,count,children})=>(
+    <div style={{background:'#1e293b',border:`1px solid ${color}40`,borderRadius:12,padding:'16px 20px',marginBottom:16}}>
+      <div style={{fontSize:14,fontWeight:700,color,marginBottom:count>0?14:0}}>{title} <span style={{fontSize:12,color:'#64748b',fontWeight:400}}>({count})</span></div>
+      {children}
+    </div>
+  );
+
+  return (
+    <div style={{paddingBottom:40}}>
+      <div style={{marginBottom:24}}>
+        <div style={{fontSize:18,fontWeight:800,color:'#f1f5f9'}}>⚠️ Panel de Alertas</div>
+        <div style={{fontSize:12,color:'#64748b',marginTop:2}}>{total} alerta{total!==1?'s':''} activa{total!==1?'s':''} · {new Date().toLocaleDateString('es-ES')}</div>
+      </div>
+
+      <Block color={sinCobertura.length>0?'#ef4444':'#22c55e'} title={sinCobertura.length>0?'🔴 Sin previsión en 15 días':'✅ Todos con previsión cubierta'} count={sinCobertura.length}>
+        {sinCobertura.length>0&&(
+          <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+            {sinCobertura.map(p=>(
+              <div key={p.id} style={{background:'#450a0a',border:'1px solid #7f1d1d',borderRadius:8,padding:'8px 14px'}}>
+                <div style={{fontSize:12,fontWeight:700,color:'#f1f5f9'}}>{p.name}</div>
+                <div style={{fontSize:10,color:'#64748b'}}>{p.perfil}</div>
+                {p.email&&<div style={{fontSize:10,color:'#94a3b8'}}>{p.email}</div>}
+              </div>
+            ))}
+          </div>
+        )}
+      </Block>
+
+      {entregas7.length>0&&(
+        <Block color='#f59e0b' title='🔔 Entregas próximas 7 días' count={entregas7.length}>
+          {entregas7.map(p=>(
+            <div key={p.id} style={{display:'flex',justifyContent:'space-between',background:'#0f172a',borderRadius:8,padding:'10px 14px',marginBottom:6}}>
+              <div><div style={{fontSize:13,fontWeight:700,color:'#f1f5f9'}}>{p.name}</div><div style={{fontSize:11,color:'#64748b'}}>{p.client}</div></div>
+              <span style={{background:'#f59e0b20',color:'#f59e0b',fontSize:11,fontWeight:700,padding:'4px 10px',borderRadius:6}}>{p.entrega}</span>
+            </div>
+          ))}
+        </Block>
+      )}
+
+      {fin30.length>0&&(
+        <Block color='#3b82f6' title='📅 Proyectos que terminan en 30 días' count={fin30.length}>
+          <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+            {fin30.map(p=>(<div key={p.id} style={{background:'#0f172a',borderRadius:8,padding:'8px 14px',fontSize:12}}><span style={{fontWeight:700,color:'#f1f5f9'}}>{p.name}</span><span style={{color:'#64748b',marginLeft:8}}>fin: {p.fin}</span></div>))}
+          </div>
+        </Block>
+      )}
+
+      {overBudget.length>0&&(
+        <Block color='#ef4444' title='💸 Presupuesto excedido' count={overBudget.length}>
+          {overBudget.map(p=>{
+            const pct=Math.round(p.horasConsumidas/p.horasOferta*100);
+            return(<div key={p.id} style={{display:'flex',justifyContent:'space-between',background:'#0f172a',borderRadius:8,padding:'10px 14px',marginBottom:6}}>
+              <div><div style={{fontSize:13,fontWeight:700,color:'#f1f5f9'}}>{p.name}</div><div style={{fontSize:11,color:'#64748b'}}>{p.client}</div></div>
+              <span style={{background:'#ef444420',color:'#ef4444',fontSize:12,fontWeight:800,padding:'4px 10px',borderRadius:6}}>{pct}%</span>
+            </div>);
+          })}
+        </Block>
+      )}
+
+      {absConflicts.length>0&&(
+        <Block color='#a78bfa' title='🗓️ Conflictos de ausencia con asignación' count={absConflicts.length}>
+          {absConflicts.map((ab,i)=>{
+            const per=people.find(p=>p.id===ab.personId);
+            return(<div key={i} style={{background:'#0f172a',borderRadius:8,padding:'10px 14px',marginBottom:6,fontSize:12,color:'#e2e8f0'}}>
+              <span style={{fontWeight:700}}>{per?per.name:ab.personId}</span>
+              <span style={{color:'#a78bfa',marginLeft:8}}>{ab.tipo}</span>
+              <span style={{color:'#64748b',marginLeft:8}}>{ab.inicio} → {ab.fin}</span>
+            </div>);
+          })}
+        </Block>
+      )}
+
+      {total===0&&(
+        <div style={{textAlign:'center',padding:'60px 20px',color:'#64748b'}}>
+          <div style={{fontSize:48,marginBottom:16}}>✅</div>
+          <div style={{fontSize:16,fontWeight:700,color:'#22c55e',marginBottom:8}}>Todo en orden</div>
+          <div style={{fontSize:13}}>Sin alertas activas</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── ADMIN TAB ────────────────────────────────────────────────────────────────
+function AdminTab({showToast}) {
+  const [users,setUsers]=React.useState([]);
+  const [loading,setLoading]=React.useState(true);
+  const [form,setForm]=React.useState({email:'',name:'',role:'coordinator',pass:'',pass2:''});
+  const [err,setErr]=React.useState('');
+  const [busy,setBusy]=React.useState(false);
+  const load=async()=>{setLoading(true);try{setUsers(await listUsers());}finally{setLoading(false);}};
+  React.useEffect(()=>{load();},[]);
+  const handleCreate=async()=>{
+    if(!form.email||!form.name||!form.pass){setErr('Completa todos los campos');return;}
+    if(form.pass!==form.pass2){setErr('Contraseñas no coinciden');return;}
+    if(form.pass.length<6){setErr('Mínimo 6 caracteres');return;}
+    setBusy(true);setErr('');
+    try{await createUser(form.email,form.name,form.role,form.pass);setForm({email:'',name:'',role:'coordinator',pass:'',pass2:''});await load();showToast('Usuario creado ✓');}
+    catch(e){setErr(e.message);}finally{setBusy(false);}
+  };
+  const handleDelete=async(u)=>{
+    if(!window.confirm('¿Eliminar a '+u.name+'?'))return;
+    try{await deleteUser(u.id);await load();showToast('Eliminado');}
+    catch(e){showToast('Error: '+e.message);}
+  };
+  const inp={background:'#0f172a',border:'1px solid #334155',borderRadius:8,padding:'9px 12px',color:'#e2e8f0',fontSize:13,width:'100%',outline:'none',marginTop:6};
+  const lbl={fontSize:11,color:'#64748b',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px',display:'block'};
+  const rC={admin:'#ef4444',coordinator:'#3b82f6',viewer:'#22c55e'};
+  const rL={admin:'Admin',coordinator:'Coordinador',viewer:'Dirección'};
+  return (
+    <div style={{paddingBottom:40}}>
+      <div style={{marginBottom:24}}>
+        <div style={{fontSize:18,fontWeight:800,color:'#f1f5f9'}}>🔐 Gestión de Usuarios</div>
+        <div style={{fontSize:12,color:'#64748b',marginTop:2}}>Solo visible para administradores</div>
+      </div>
+      <div style={{background:'#1e293b',border:'1px solid #1e3a5f',borderRadius:12,marginBottom:24,overflow:'hidden'}}>
+        <div style={{padding:'14px 20px',borderBottom:'1px solid #0f172a',fontSize:13,fontWeight:700,color:'#94a3b8'}}>Usuarios registrados</div>
+        {loading?<div style={{padding:24,textAlign:'center',color:'#64748b'}}>Cargando…</div>:(
+          <table style={{width:'100%',borderCollapse:'collapse'}}>
+            <thead><tr style={{background:'#0f172a'}}>
+              {['Nombre','Email','Rol','Fecha',''].map(h=><th key={h} style={{padding:'8px 14px',fontSize:10,fontWeight:700,color:'#475569',textTransform:'uppercase',textAlign:'left'}}>{h}</th>)}
+            </tr></thead>
+            <tbody>
+              {users.map((u,i)=>(
+                <tr key={u.id} style={{background:i%2===0?'#1e293b':'#162032',borderBottom:'1px solid #0f172a'}}>
+                  <td style={{padding:'10px 14px',fontSize:13,fontWeight:700,color:'#f1f5f9'}}>{u.name}</td>
+                  <td style={{padding:'10px 14px',fontSize:12,color:'#94a3b8'}}>{u.email}</td>
+                  <td style={{padding:'10px 14px'}}><span style={{background:(rC[u.role]||'#64748b')+'20',color:rC[u.role]||'#64748b',fontSize:10,fontWeight:700,padding:'3px 8px',borderRadius:20}}>{rL[u.role]||u.role}</span></td>
+                  <td style={{padding:'10px 14px',fontSize:11,color:'#64748b'}}>{u.created_at?u.created_at.slice(0,10):'-'}</td>
+                  <td style={{padding:'10px 14px'}}><button onClick={()=>handleDelete(u)} style={{border:'none',background:'#ef444420',color:'#ef4444',borderRadius:6,padding:'4px 10px',fontSize:11,cursor:'pointer',fontWeight:600}}>Eliminar</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+      <div style={{background:'#1e293b',border:'1px solid #1e3a5f',borderRadius:12,padding:'20px 24px'}}>
+        <div style={{fontSize:13,fontWeight:700,color:'#94a3b8',marginBottom:16}}>+ Nuevo usuario</div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:16}}>
+          <div><label style={lbl}>Nombre</label><input type="text" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} style={inp}/></div>
+          <div><label style={lbl}>Email</label><input type="email" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))} style={inp}/></div>
+          <div><label style={lbl}>Rol</label>
+            <select value={form.role} onChange={e=>setForm(f=>({...f,role:e.target.value}))} style={{...inp}}>
+              <option value="coordinator">Coordinador</option>
+              <option value="viewer">Dirección (Viewer)</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div><label style={lbl}>Contraseña</label><input type="password" value={form.pass} onChange={e=>setForm(f=>({...f,pass:e.target.value}))} style={inp}/></div>
+          <div style={{gridColumn:'1/-1'}}><label style={lbl}>Repetir contraseña</label><input type="password" value={form.pass2} onChange={e=>setForm(f=>({...f,pass2:e.target.value}))} style={inp}/></div>
+        </div>
+        {err&&<div style={{color:'#ef4444',fontSize:12,marginBottom:12,background:'#450a0a',border:'1px solid #7f1d1d',borderRadius:6,padding:'8px 12px'}}>{err}</div>}
+        <button onClick={handleCreate} disabled={busy} style={{background:busy?'#1e3a5f':'#3b82f6',color:'#fff',border:'none',borderRadius:8,padding:'9px 18px',fontSize:13,fontWeight:700,cursor:busy?'wait':'pointer'}}>
+          {busy?'Creando…':'Crear usuario'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── VIEWER DASHBOARD ─────────────────────────────────────────────────────────
+function ViewerDashboard({currentUser,onLogout,initData}) {
+  const [d,setD]=React.useState(null);
+  const [loading,setLoading]=React.useState(true);
+  React.useEffect(()=>{
+    if(initData){setD(initData);setLoading(false);return;}
+    loadFromSupabase().then(r=>{setD(r);setLoading(false);}).catch(()=>setLoading(false));
+  },[]);
+  if(loading) return <LoadingScreen msg="Cargando dashboard…"/>;
+  if(!d) return <LoadingScreen msg="Sin datos"/>;
+  const {projects,people,assignments}=d;
+  const active=projects.filter(p=>p.status!=='Cerrado');
+  const activos=people.filter(p=>p.status==='Activo OT').length;
+  const totalO=projects.reduce((s,p)=>s+p.horasOferta,0);
+  const totalC=projects.reduce((s,p)=>s+p.horasConsumidas,0);
+  const riesgo=projects.filter(p=>p.horasOferta>0&&p.horasConsumidas/p.horasOferta>1).length;
+  const download=()=>{
+    const sep = '\t';
+    const nl = '\n';
+    const lines = [
+      'CBS BIM Office — Informe Ejecutivo ' + new Date().toLocaleDateString('es-ES'),
+      '', 'RESUMEN',
+      'Proyectos activos: ' + active.length,
+      'Equipo: ' + activos + ' personas',
+      'H. ofertadas: ' + totalO + 'h',
+      'H. consumidas: ' + totalC + 'h',
+      'Avance: ' + Math.round(totalC/totalO*100) + '%',
+      'En riesgo: ' + riesgo,
+      '', 'PROYECTOS',
+      'Proyecto' + sep + 'Cliente' + sep + 'Estado' + sep + 'H.Oferta' + sep + 'H.Consumidas' + sep + 'Avance',
+      ...active.map(p => p.name + sep + p.client + sep + p.status + sep + p.horasOferta + sep + p.horasConsumidas + sep + (p.horasOferta>0?Math.round(p.horasConsumidas/p.horasOferta*100):0) + '%')
+    ].join(nl);
+    const blob=new Blob([lines],{type:'text/plain'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download='CBS_Informe_'+new Date().toISOString().slice(0,10)+'.txt';a.click();URL.revokeObjectURL(url);
+  };
+  return (
+    <div style={{minHeight:'100vh',background:'#0f172a',fontFamily:"'DM Sans',sans-serif",color:'#e2e8f0'}}>
+      <div style={{background:'#1e293b',borderBottom:'1px solid #1e3a5f',padding:'14px 24px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <div style={{width:36,height:36,borderRadius:8,background:'linear-gradient(135deg,#3b82f6,#0ea5e9)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,fontSize:16,color:'#fff'}}>B</div>
+          <div>
+            <div style={{fontSize:15,fontWeight:700,color:'#f1f5f9'}}>CBS BIM Office</div>
+            <div style={{fontSize:10,color:'#64748b',textTransform:'uppercase',letterSpacing:'0.5px'}}>Dashboard Dirección · Solo lectura</div>
+          </div>
+        </div>
+        <div style={{display:'flex',gap:10,alignItems:'center'}}>
+          <span style={{fontSize:12,color:'#64748b'}}>Hola, {currentUser.name}</span>
+          <button onClick={download} style={{background:'#3b82f6',color:'#fff',border:'none',borderRadius:8,padding:'7px 14px',fontSize:12,fontWeight:700,cursor:'pointer'}}>⬇️ Informe</button>
+          <button onClick={onLogout} style={{background:'transparent',color:'#64748b',border:'1px solid #334155',borderRadius:8,padding:'7px 12px',fontSize:12,cursor:'pointer'}}>Salir</button>
+        </div>
+      </div>
+      <div style={{padding:'24px',maxWidth:1200,margin:'0 auto'}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:12,marginBottom:28}}>
+          {[{l:'Proyectos activos',v:active.length,c:'#3b82f6'},{l:'Equipo activo',v:activos+' pers.',c:'#22c55e'},{l:'H. ofertadas',v:totalO+'h',c:'#f59e0b'},{l:'H. consumidas',v:totalC+'h',c:'#3b82f6'},{l:'En riesgo',v:riesgo,c:riesgo>0?'#ef4444':'#22c55e'}].map(k=>(
+            <div key={k.l} style={{background:'#1e293b',border:'1px solid #1e3a5f',borderRadius:12,padding:'16px'}}>
+              <div style={{fontSize:10,color:'#64748b',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:6}}>{k.l}</div>
+              <div style={{fontSize:22,fontWeight:800,color:k.c}}>{k.v}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{background:'#1e293b',border:'1px solid #1e3a5f',borderRadius:12,overflow:'hidden'}}>
+          <div style={{padding:'14px 20px',borderBottom:'1px solid #0f172a',fontSize:14,fontWeight:700,color:'#f1f5f9'}}>Proyectos</div>
+          <table style={{width:'100%',borderCollapse:'collapse'}}>
+            <thead><tr style={{background:'#0f172a'}}>
+              {['Proyecto','Cliente','Tipo','Estado','Oferta','Consumidas','Avance'].map(h=><th key={h} style={{padding:'8px 14px',fontSize:10,fontWeight:700,color:'#475569',textTransform:'uppercase',textAlign:'left'}}>{h}</th>)}
+            </tr></thead>
+            <tbody>
+              {active.map((p,i)=>{
+                const pct=p.horasOferta>0?Math.round(p.horasConsumidas/p.horasOferta*100):0;
+                const c=pct>=100?'#ef4444':pct>=85?'#f59e0b':'#22c55e';
+                return(<tr key={p.id} style={{background:i%2===0?'#1e293b':'#162032',borderBottom:'1px solid #0f172a'}}>
+                  <td style={{padding:'10px 14px',fontSize:13,fontWeight:700,color:'#f1f5f9'}}>{p.name}</td>
+                  <td style={{padding:'10px 14px',fontSize:12,color:'#94a3b8'}}>{p.client}</td>
+                  <td style={{padding:'10px 14px'}}><span style={{background:'#3b82f620',color:'#3b82f6',fontSize:10,fontWeight:700,padding:'2px 8px',borderRadius:20}}>{p.tipo}</span></td>
+                  <td style={{padding:'10px 14px',fontSize:11,color:'#22c55e'}}>{p.status}</td>
+                  <td style={{padding:'10px 14px',fontSize:12,textAlign:'right'}}>{p.horasOferta}h</td>
+                  <td style={{padding:'10px 14px',fontSize:12,textAlign:'right',color:'#3b82f6',fontWeight:700}}>{p.horasConsumidas}h</td>
+                  <td style={{padding:'10px 14px'}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <div style={{background:'#0f172a',borderRadius:99,height:4,width:60,overflow:'hidden'}}>
+                        <div style={{width:Math.min(pct,100)+'%',height:'100%',background:c,borderRadius:99}}/>
+                      </div>
+                      <span style={{fontSize:11,fontWeight:700,color:c}}>{pct}%</span>
+                    </div>
+                  </td>
+                </tr>);
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── ROOT COMPONENT ───────────────────────────────────────────────────────────
+function Root() {
+  const [state,setState]=useState('loading');
+  const [user,setUser]=useState(null);
+  const [initData,setInitData]=useState(null);
+
+  useEffect(()=>{
+    try {
+      const saved=sessionStorage.getItem('cbs_bim_user');
+      if(saved){
+        const u=JSON.parse(saved);
+        setUser(u);
+        loadFromSupabase().then(d=>{
+          if(d.projects.length===0){
+            const ls=localStorage.getItem('cbs_bim_2026_v2');
+            if(ls){
+              try{
+                const parsed=JSON.parse(ls);
+                syncToSupabase(parsed).then(()=>loadFromSupabase()).then(d2=>{setInitData(d2);setState('app');}).catch(()=>{setInitData(parsed);setState('app');});
+              }catch(e){setInitData(d);setState('app');}
+            }else{setInitData(d);setState('app');}
+          }else{setInitData(d);setState('app');}
+        }).catch(()=>setState('login'));
+        return;
+      }
+    }catch(e){}
+    checkFirstRun().then(first=>setState(first?'setup':'login')).catch(()=>setState('login'));
+  },[]);
+
+  const handleLogin=async(email,password)=>{
+    const u=await loginUser(email,password);
+    sessionStorage.setItem('cbs_bim_user',JSON.stringify(u));
+    setUser(u);
+    const d=await loadFromSupabase();
+    if(d.projects.length===0){
+      const ls=localStorage.getItem('cbs_bim_2026_v2');
+      if(ls){try{const parsed=JSON.parse(ls);await syncToSupabase(parsed);const d2=await loadFromSupabase();setInitData(d2);}catch(e){setInitData(d);}}
+      else setInitData(d);
+    }else setInitData(d);
+    setState('app');
+  };
+
+  const handleSetup=async(email,name,password)=>{
+    await createUser(email,name,'admin',password);
+    await handleLogin(email,password);
+  };
+
+  const handleLogout=()=>{
+    sessionStorage.removeItem('cbs_bim_user');
+    setUser(null);setInitData(null);setState('login');
+  };
+
+  if(state==='loading') return <LoadingScreen msg="Conectando con CBS BIM Office…"/>;
+  if(state==='setup')   return <SetupScreen onSetup={handleSetup}/>;
+  if(state==='login')   return <LoginScreen onLogin={handleLogin}/>;
+  if(!user) return <LoginScreen onLogin={handleLogin}/>;
+  if(user.role==='viewer') return <ViewerDashboard currentUser={user} onLogout={handleLogout} initData={initData}/>;
+  return <App currentUser={user} onLogout={handleLogout} initData={initData}/>;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<Root/>);
+function App({ currentUser, onLogout, initData }) {
+
+  const getDefaultData = () => {
+    if (initData && initData.projects && initData.projects.length > 0) {
+      return {
+        projects:    normalizeProjects(initData.projects),
+        people:      normalizePeople(initData.people||[]),
+        assignments: initData.assignments||[],
+        absences:    initData.absences||[],
+      };
+    }
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if(saved) {
         const parsed = JSON.parse(saved);
-        parsed.projects = parsed.projects.map((p,i) => ({
-          ...PROJECTS_DEFAULT[i] ? {inicio:PROJECTS_DEFAULT[i].inicio,fin:PROJECTS_DEFAULT[i].fin,entrega:PROJECTS_DEFAULT[i].entrega} : {},
-          ...p
-        }));
         if(!parsed.absences) parsed.absences = [];
-        parsed.people    = normalizePeople(parsed.people);
-        parsed.projects  = normalizeProjects(parsed.projects);
+        parsed.people   = normalizePeople(parsed.people);
+        parsed.projects = normalizeProjects(parsed.projects);
         return parsed;
       }
     } catch(e) {}
     return { projects: PROJECTS_DEFAULT, people: PEOPLE_DEFAULT, assignments: ASSIGNMENTS_DEFAULT, absences: [] };
-  });
+  };
+  const [data,    setData]    = useState(getDefaultData);
+  const [syncing, setSyncing] = useState(false);
 
   const { projects, people, assignments, absences } = data;
 
@@ -1919,6 +2427,8 @@ function App() {
     setData(prev => {
       const next = {...prev, ...patch};
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch(e) {}
+      setSyncing(true);
+      syncToSupabase(patch).catch(e=>console.warn('Sync:',e)).finally(()=>setSyncing(false));
       return next;
     });
   };
@@ -2107,7 +2617,7 @@ function App() {
   const activosHoy     = projects.filter(p=>p.inicio&&p.fin&&parseD(p.inicio)<=TODAY&&parseD(p.fin)>=TODAY).length;
 
   const EMPTY_PROJ   = {name:"",client:"",bimId:"",tipo:"MOD",status:"Inicio",horasOferta:0,horasConsumidas:0,horasOfertaMod:0,horasOfertaCoo:0,horasConsMod:0,horasConsCoo:0,inicio:"",fin:"",entrega:"",hitos:[]};
-  const EMPTY_PERSON = {name:"",perfil:"BIM Modelador",ubicacion:"Madrid",status:"Activo OT",software:"Revit",horasDia:8};
+  const EMPTY_PERSON = {name:"",perfil:"BIM Modelador",ubicacion:"Madrid",status:"Activo OT",software:"Revit",horasDia:8,email:""};
 
   const projModalAssigs = projFormModal ? assignments.filter(function(a){ return a.projectId === projFormModal.data.id; }) : [];
 
@@ -2209,16 +2719,21 @@ function App() {
             <div style={{fontSize:10,color:"#64748b",letterSpacing:"0.5px",textTransform:"uppercase"}}>Gestión de proyectos y equipo · 2026</div>
           </div>
         </div>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
           <div style={S.tabs}>
             <button style={S.tab(view==="projects")} onClick={()=>{setView("projects");setSelProject(null);setSearch("");}}>📋 Proyectos</button>
             <button style={S.tab(view==="people")}   onClick={()=>{setView("people");setSelPerson(null);setSearch("");}}>👥 Personas</button>
             <button style={S.tab(view==="calendar")} onClick={()=>{setView("calendar");setSearch("");}}>📅 Calendario</button>
             <button style={S.tab(view==="report")}   onClick={()=>{setView("report");setSearch("");}}>📊 Informe</button>
+            <button style={S.tab(view==="alerts")}   onClick={()=>{setView("alerts");setSearch("");}}>⚠️ Alertas</button>
+            {currentUser&&currentUser.role==="admin"&&<button style={S.tab(view==="admin")} onClick={()=>{setView("admin");setSearch("");}}>🔐 Admin</button>}
           </div>
-          <button onClick={()=>{setShowDataModal(true);setImportText("");setImportError("");}} style={{background:"#1e293b",border:"1px solid #334155",color:"#94a3b8",borderRadius:8,padding:"6px 12px",cursor:"pointer",fontSize:13,fontWeight:600,display:"flex",alignItems:"center",gap:6}} title="Importar / Exportar datos">
+          <button onClick={()=>{setShowDataModal(true);setImportText("");setImportError("");}} style={{background:"#1e293b",border:"1px solid #334155",color:"#94a3b8",borderRadius:8,padding:"6px 12px",cursor:"pointer",fontSize:13,fontWeight:600,display:"flex",alignItems:"center",gap:6}}>
             ⬆️⬇️ Datos
           </button>
+          {syncing&&<span style={{fontSize:11,color:"#64748b",animation:"spin 1s linear infinite"}}>⟳</span>}
+          {currentUser&&<span style={{fontSize:12,color:"#64748b"}}>{currentUser.name}</span>}
+          {onLogout&&<button onClick={onLogout} style={{background:"transparent",color:"#64748b",border:"1px solid #334155",borderRadius:8,padding:"6px 10px",fontSize:12,cursor:"pointer"}}>Salir</button>}
         </div>
       </div>
 
@@ -2257,6 +2772,12 @@ function App() {
 
         {/* REPORT */}
         {view==="report" && <ReportView projects={projects} people={people} assignments={assignments}/>}
+
+        {/* ALERTS */}
+        {view==="alerts" && <AlertsTab projects={projects} people={people} assignments={assignments} absences={absences}/>}
+
+        {/* ADMIN */}
+        {view==="admin" && currentUser && currentUser.role==="admin" && <AdminTab showToast={showToast}/>}
 
         {/* PROJECTS VIEW */}
         {view==="projects" && (
@@ -3120,7 +3641,11 @@ function App() {
                 </div>
                 <div style={{fontSize:10,color:"#475569",marginTop:4}}>Usado para calcular horas automáticamente al asignar por fechas</div>
               </div>
-              <div style={{display:"flex",gap:8,marginTop:24,justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{marginTop:12}}>
+                <label style={S.lbl}>Email (notificaciones semanales)</label>
+                <input type="email" value={personFormModal.data.email||""} onChange={e=>setPersonFormModal(m=>({...m,data:{...m.data,email:e.target.value}}))} placeholder="nombre@empresa.com" style={S.inp}/>
+              </div>
+                            <div style={{display:"flex",gap:8,marginTop:24,justifyContent:"space-between",alignItems:"center"}}>
                 {personFormModal.mode==="edit"?(
                   <button style={S.btn("danger")} onClick={()=>{if(window.confirm("¿Eliminar a "+personFormModal.data.name+"?")){update({people:people.filter(p=>p.id!==personFormModal.data.id),assignments:assignments.filter(a=>a.personId!==personFormModal.data.id)});if(selPerson&&selPerson.id===personFormModal.data.id)setSelPerson(null);setPersonFormModal(null);showToast("Eliminada");}}}>Eliminar</button>
                 ):<div/>}
@@ -3341,7 +3866,6 @@ function App() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 
 </script>
 </body>
