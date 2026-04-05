@@ -2438,12 +2438,12 @@ function App({ currentUser, onLogout, initData }) {
 
   const { projects, people, assignments, absences } = data;
 
-  // Auto-calculate consumed hours from real assignment hours
+  // Auto-calculate consumed hours from planned assignment hours
   const computedProjects = useMemo(() => projects.map(p => {
     const projAsgns = assignments.filter(a => a.projectId === p.id);
-    const cons    = projAsgns.reduce((s,a) => s + (a.horasReales||0), 0);
-    const consMod = projAsgns.filter(a => a.rol === 'Modelado').reduce((s,a) => s + (a.horasReales||0), 0);
-    const consCoo = projAsgns.filter(a => a.rol === 'Coordinación' || a.rol === 'Coordinacion').reduce((s,a) => s + (a.horasReales||0), 0);
+    const cons    = projAsgns.reduce((s,a) => s + (a.horas||0), 0);
+    const consMod = projAsgns.filter(a => a.rol === 'Modelado').reduce((s,a) => s + (a.horas||0), 0);
+    const consCoo = projAsgns.filter(a => a.rol === 'Coordinación' || a.rol === 'Coordinacion').reduce((s,a) => s + (a.horas||0), 0);
     return {...p, horasConsumidas: cons, horasConsMod: consMod, horasConsCoo: consCoo};
   }), [projects, assignments]);
 
