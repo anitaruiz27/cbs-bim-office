@@ -1780,22 +1780,37 @@ function ReportView({ projects, people, assignments }) {
 }
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 
-// Helper: count working days (Mon–Fri) between two date strings
-function workingDays(iniStr, finStr) {
+// Helper: count working days (Mon–Fri) between two date strings, excluding absence periods
+function workingDays(iniStr, finStr, absences, personId) {
   if(!iniStr || !finStr) return 0;
   var s = parseD(iniStr), e = parseD(finStr), count = 0;
+
+  // Build set of absence dates for this person
+  var absenceDates = new Set();
+  if(absences && personId) {
+    absences.filter(function(ab){ return ab.personId === personId; }).forEach(function(ab){
+      var abS = parseD(ab.inicio), abE = parseD(ab.fin);
+      var d2 = new Date(abS);
+      while(d2 <= abE) {
+        absenceDates.add(d2.toISOString().slice(0,10));
+        d2.setDate(d2.getDate() + 1);
+      }
+    });
+  }
+
   var d = new Date(s);
   while(d <= e) {
     var day = d.getDay();
-    if(day !== 0 && day !== 6) count++;
+    var iso = d.toISOString().slice(0,10);
+    if(day !== 0 && day !== 6 && !absenceDates.has(iso)) count++;
     d.setDate(d.getDate() + 1);
   }
   return count;
 }
 
-// Calculate horas from fechaIni + fechaFin + pct + horasDia
-function calcHoras(fechaIni, fechaFin, pct, horasDia) {
-  var days = workingDays(fechaIni, fechaFin);
+// Calculate horas from fechaIni + fechaFin + pct + horasDia, optionally excluding absences
+function calcHoras(fechaIni, fechaFin, pct, horasDia, absences, personId) {
+  var days = workingDays(fechaIni, fechaFin, absences, personId);
   var hd = horasDia || 8;
   var p = pct || 100;
   return Math.round(days * hd * p / 100);
@@ -2423,6 +2438,15 @@ function App({ currentUser, onLogout, initData }) {
 
   const { projects, people, assignments, absences } = data;
 
+  // Auto-calculate consumed hours from real assignment hours
+  const computedProjects = useMemo(() => projects.map(p => {
+    const projAsgns = assignments.filter(a => a.projectId === p.id);
+    const cons    = projAsgns.reduce((s,a) => s + (a.horasReales||0), 0);
+    const consMod = projAsgns.filter(a => a.rol === 'Modelado').reduce((s,a) => s + (a.horasReales||0), 0);
+    const consCoo = projAsgns.filter(a => a.rol === 'Coordinación' || a.rol === 'Coordinacion').reduce((s,a) => s + (a.horasReales||0), 0);
+    return {...p, horasConsumidas: cons, horasConsMod: consMod, horasConsCoo: consCoo};
+  }), [projects, assignments]);
+
   const update = (patch) => {
     setData(prev => {
       const next = {...prev, ...patch};
@@ -2497,7 +2521,8 @@ function App({ currentUser, onLogout, initData }) {
   // Recalculate horas when modal date/pct changes
   const recalcModal = (fechaIni, fechaFin, pct, personId) => {
     const hd = getPersonHorasDia(personId || (modal && modal.personId) || "");
-    const h = calcHoras(fechaIni, fechaFin, pct, hd);
+    const pid = personId || (modal && modal.personId) || "";
+    const h = calcHoras(fechaIni, fechaFin, pct, hd, absences, pid);
     setMHorasCalc(h);
     if(h > 0) setMHoras(String(h));
   };
@@ -2595,6 +2620,8 @@ function App({ currentUser, onLogout, initData }) {
     setSelPersonIds(new Set()); showToast(ids.size+" persona(s) eliminadas");
   };
 
+  const getComputed = (proj) => computedProjects.find(cp => cp.id === proj.id) || proj;
+
   const filteredProjects = projects.filter(p => {
     const q = search.toLowerCase();
     const ok = p.name.toLowerCase().includes(q)||p.client.toLowerCase().includes(q)||p.id.toLowerCase().includes(q);
@@ -2611,8 +2638,8 @@ function App({ currentUser, onLogout, initData }) {
   });
 
   const totalOferta    = projects.reduce((s,p)=>s+p.horasOferta,0);
-  const totalConsumidas= projects.reduce((s,p)=>s+p.horasConsumidas,0);
-  const enRiesgo       = projects.filter(p=>p.horasOferta>0&&p.horasConsumidas/p.horasOferta>1).length;
+  const totalConsumidas= computedProjects.reduce((s,p)=>s+p.horasConsumidas,0);
+  const enRiesgo       = computedProjects.filter(p=>p.horasOferta>0&&p.horasConsumidas/p.horasOferta>1).length;
   const activos        = people.filter(p=>p.status==="Activo OT").length;
   const activosHoy     = projects.filter(p=>p.inicio&&p.fin&&parseD(p.inicio)<=TODAY&&parseD(p.fin)>=TODAY).length;
 
@@ -2628,7 +2655,7 @@ function App({ currentUser, onLogout, initData }) {
     var prId = projFormModal.data.id;
     if(!prId) return;
     var person = people.find(function(p){ return p.id === pjPersonId; });
-    var horas = calcHoras(pjFechaIni, pjFechaFin, pjPct, person ? person.horasDia : 8);
+    var horas = calcHoras(pjFechaIni, pjFechaFin, pjPct, person ? person.horasDia : 8, absences, pjPersonId);
     var entry = {personId:pjPersonId, projectId:prId, horas:horas||0, horasReales:0,
       rol:pjRol, software:pjSoftware, fechaIni:pjFechaIni||null, fechaFin:pjFechaFin||null, pct:pjPct||100};
     var exists = assignments.find(function(a){ return a.personId===pjPersonId && a.projectId===prId && a.rol===pjRol; });
@@ -2764,17 +2791,17 @@ function App({ currentUser, onLogout, initData }) {
               <button style={S.tab(calTab==="equipo")}    onClick={()=>setCalTab("equipo")}>👤 Equipo</button>
             </div>
             {calTab==="proyectos"
-              ? <GanttView projects={projects} assignments={assignments}/>
-              : <PeopleGanttView projects={projects} people={people} assignments={assignments} absences={absences} onUpdateAbsences={abs=>update({absences:abs})}/>
+              ? <GanttView projects={computedProjects} assignments={assignments}/>
+              : <PeopleGanttView projects={computedProjects} people={people} assignments={assignments} absences={absences} onUpdateAbsences={abs=>update({absences:abs})}/>
             }
           </div>
         )}
 
         {/* REPORT */}
-        {view==="report" && <ReportView projects={projects} people={people} assignments={assignments}/>}
+        {view==="report" && <ReportView projects={computedProjects} people={people} assignments={assignments}/>}
 
         {/* ALERTS */}
-        {view==="alerts" && <AlertsTab projects={projects} people={people} assignments={assignments} absences={absences}/>}
+        {view==="alerts" && <AlertsTab projects={computedProjects} people={people} assignments={assignments} absences={absences}/>}
 
         {/* ADMIN */}
         {view==="admin" && currentUser && currentUser.role==="admin" && <AdminTab showToast={showToast}/>}
@@ -2806,8 +2833,9 @@ function App({ currentUser, onLogout, initData }) {
             {selProject && projView==="cards" && (() => {
               const proj = selProject;
               const asgns = asgnByProject(proj.id);
-              const rent = rentColor(proj.horasOferta,proj.horasConsumidas);
-              const pct = proj.horasOferta>0?Math.round(proj.horasConsumidas/proj.horasOferta*100):0;
+              const cProj = getComputed(proj);
+              const rent = rentColor(cProj.horasOferta,cProj.horasConsumidas);
+              const pct = cProj.horasOferta>0?Math.round(cProj.horasConsumidas/cProj.horasOferta*100):0;
               const isEditC = editProjKey===proj.id;
               const hitos = proj.hitos||[];
               return (
@@ -2857,7 +2885,7 @@ function App({ currentUser, onLogout, initData }) {
                   )}
 
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
-                    {[{label:"Modelado",oferta:proj.horasOfertaMod||0,cons:proj.horasConsMod||0,color:"#3b82f6"},{label:"Coordinación",oferta:proj.horasOfertaCoo||0,cons:proj.horasConsCoo||0,color:"#a78bfa"}].map(seg=>{
+                    {[{label:"Modelado",oferta:proj.horasOfertaMod||0,cons:getComputed(proj).horasConsMod||0,color:"#3b82f6"},{label:"Coordinación",oferta:proj.horasOfertaCoo||0,cons:getComputed(proj).horasConsCoo||0,color:"#a78bfa"}].map(seg=>{
                       const sp=seg.oferta>0?Math.round(seg.cons/seg.oferta*100):0;
                       return (
                         <div key={seg.label} style={{background:"#0f172a",borderRadius:8,padding:"12px 14px",border:"1px solid "+seg.color+"30"}}>
@@ -2884,12 +2912,12 @@ function App({ currentUser, onLogout, initData }) {
                     </div>
                     <div style={{background:"#0f172a",borderRadius:8,padding:"10px 14px"}}>
                       <span style={S.lbl}>H. Pendientes</span>
-                      <div style={{fontSize:22,fontWeight:800,color:"#f1f5f9"}}>{proj.horasOferta-proj.horasConsumidas}h</div>
+                      <div style={{fontSize:22,fontWeight:800,color:"#f1f5f9"}}>{getComputed(proj).horasOferta-getComputed(proj).horasConsumidas}h</div>
                     </div>
                     <div style={{background:"#0f172a",borderRadius:8,padding:"10px 14px"}}>
                       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:2}}>
                         <span style={S.lbl}>H. Consumidas</span>
-                        {!isEditC && <button style={{...S.btn("ghost"),fontSize:10,color:"#3b82f6"}} onClick={()=>{setEditProjKey(proj.id);setEditProjVal(String(proj.horasConsumidas));}}>editar</button>}
+                        <span style={{fontSize:9,color:"#22c55e",fontWeight:600}}>auto ✓</span>
                       </div>
                       {isEditC ? (
                         <div style={{display:"flex",gap:4,alignItems:"center",marginTop:4}}>
@@ -2898,7 +2926,7 @@ function App({ currentUser, onLogout, initData }) {
                           <button style={S.btn("ghost")}   onClick={()=>setEditProjKey(null)}>✕</button>
                         </div>
                       ) : (
-                        <div style={{fontSize:22,fontWeight:800,color:"#f1f5f9"}}>{proj.horasConsumidas}h</div>
+                        <div style={{fontSize:22,fontWeight:800,color:"#f1f5f9"}}>{getComputed(proj).horasConsumidas}h</div>
                       )}
                     </div>
                   </div>
@@ -3048,7 +3076,7 @@ function App({ currentUser, onLogout, initData }) {
                               <div style={{background:"#0f172a",borderRadius:99,height:4,width:36,overflow:"hidden"}}>
                                 <div style={{width:Math.min(pct,100)+"%",height:"100%",background:progressColor(pct)}}/>
                               </div>
-                              <span style={{color:progressColor(pct),fontWeight:700,fontSize:10}}>{proj.horasConsumidas}h</span>
+                              <span style={{color:progressColor(pct),fontWeight:700,fontSize:10}}>{getComputed(proj).horasConsumidas}h</span>
                             </div>
                           </td>
                           <td style={{...cs,textAlign:"right",color:"#3b82f6"}}>{proj.horasOfertaMod||0}h</td>
@@ -3398,7 +3426,7 @@ function App({ currentUser, onLogout, initData }) {
               {modal.type==="to-project" ? (
                 <div>
                   <label style={S.lbl}>Persona</label>
-                  <select value={mPersonId} onChange={e=>{setMPersonId(e.target.value);const p=people.find(x=>x.id===e.target.value);if(p&&p.software)setMSoftware(p.software==="Ambos"?"Revit":p.software);if(mFechaIni&&mFechaFin){const hd=p?p.horasDia||8:8;setMHorasCalc(calcHoras(mFechaIni,mFechaFin,mPct,hd));setMHoras(String(calcHoras(mFechaIni,mFechaFin,mPct,hd)));}}} style={S.sel}>
+                  <select value={mPersonId} onChange={e=>{setMPersonId(e.target.value);const p=people.find(x=>x.id===e.target.value);if(p&&p.software)setMSoftware(p.software==="Ambos"?"Revit":p.software);if(mFechaIni&&mFechaFin){const hd=p?p.horasDia||8:8;setMHorasCalc(calcHoras(mFechaIni,mFechaFin,mPct,hd,absences,mPersonId));setMHoras(String(calcHoras(mFechaIni,mFechaFin,mPct,hd,absences,mPersonId)));}}} style={S.sel}>
                     <option value="">— Seleccionar —</option>
                     {people.filter(p=>p.status!=="Baja médica").map(p=>(
                       <option key={p.id} value={p.id}>{p.name} ({p.perfil} · {p.software||"Revit"} · {p.horasDia||8}h/día)</option>
